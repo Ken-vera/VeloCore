@@ -35,8 +35,9 @@ public final class VeloCore{
         for (RegisteredServer server : proxy.getAllServers()) {
             String serverName = server.getServerInfo().getName();
             commandManager.register(serverName, new Aliases(proxy, serverName));
-            commandManager.register("send", new Send(proxy));
-            commandManager.register("list", new List(proxy), "stafflist");
         }
+
+        commandManager.register("send", new Send(proxy));
+        commandManager.register("list", new List(proxy), "stafflist");
     }
 }
