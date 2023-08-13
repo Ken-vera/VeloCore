@@ -5,7 +5,6 @@ import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
-import me.kenvera.velocore.VeloCore;
 import net.kyori.adventure.text.Component;
 
 import java.util.ArrayList;
@@ -14,12 +13,10 @@ import java.util.Optional;
 
 public class Aliases implements SimpleCommand {
     private final ProxyServer proxy;
-    private final VeloCore main;
     private final String targetServerName;
 
-    public Aliases(ProxyServer proxy, VeloCore main, String targetServerName) {
+    public Aliases(ProxyServer proxy, String targetServerName) {
         this.proxy = proxy;
-        this.main = main;
         this.targetServerName = targetServerName;
     }
 
@@ -32,23 +29,29 @@ public class Aliases implements SimpleCommand {
                 .map(server -> server.getServerInfo().getName())
                 .toList());
 
-        if (!(source instanceof Player)) {
+        if (!(source instanceof Player player)) {
             source.sendMessage(Component.text("This command can only be used by players."));
             return;
         }
 
-        Player player = (Player) source;
         if (listServers.contains(invocation.alias())) {
+            if (!player.hasPermission("velocity.connect." + invocation.alias())) {
+                player.sendMessage(Component.text("§cYou are unable to connect to " + invocation.alias()));
+                return;
+            }
+
             Optional<RegisteredServer> targetServer = proxy.getServer(invocation.alias());
             if (targetServer.isEmpty()) {
                 player.sendMessage(Component.text(invocation.alias() + " server is not available."));
                 return;
             }
-            if (player.getCurrentServer().get().getServerInfo().getName() == invocation.alias()) {
+            if (player.getCurrentServer().get().getServerInfo().getName().equals(invocation.alias())) {
                 player.sendMessage(Component.text("§cYou already connected to " + invocation.alias()));
             } else {
-                player.createConnectionRequest(targetServer.get()).fireAndForget();
-                player.sendMessage(Component.text("Sending you to " + targetServer.get().getServerInfo().getName()));
+                if (player.hasPermission("velocity.connect." + targetServer.get().getServerInfo().getName())) {
+                    player.createConnectionRequest(targetServer.get()).fireAndForget();
+                    player.sendMessage(Component.text("Sending you to " + targetServer.get().getServerInfo().getName()));
+                }
             }
         }
     }
