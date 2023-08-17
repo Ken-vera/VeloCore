@@ -36,8 +36,9 @@ public final class VeloCore{
         }
 
         commandManager.register("send", new Send(proxy));
-        commandManager.register("list", new List(proxy), "stafflist");
+        commandManager.register("stafflist", new List(proxy), "sl");
         commandManager.register("globallist", new GlobalList(proxy), "glist");
         commandManager.register("report", new ReportListener(proxy));
+        commandManager.register("checkalts", new AltsChecker(proxy));
     }
 }
