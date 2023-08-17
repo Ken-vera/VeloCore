@@ -7,9 +7,7 @@ import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
-import me.kenvera.velocore.commands.Aliases;
-import me.kenvera.velocore.commands.List;
-import me.kenvera.velocore.commands.Send;
+import me.kenvera.velocore.commands.*;
 import net.kyori.adventure.text.Component;
 
 @Plugin(
@@ -39,5 +37,7 @@ public final class VeloCore{
 
         commandManager.register("send", new Send(proxy));
         commandManager.register("list", new List(proxy), "stafflist");
+        commandManager.register("globallist", new GlobalList(proxy), "glist");
+        commandManager.register("report", new ReportListener(proxy));
     }
 }

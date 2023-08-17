@@ -16,13 +16,13 @@ public class List implements SimpleCommand {
     @Override
     public void execute(Invocation invocation) {
         CommandSource source = invocation.source();
-        if (!source.hasPermission("velocity.list")) {
+        if (!source.hasPermission("velocity.stafflist")) {
             source.sendMessage(Component.text("§cYou don't have permission to run this command!"));
             return;
         }
 
         java.util.List<Player> onlineStaff = proxy.getAllPlayers().stream()
-                .filter(player -> player.hasPermission("velocity.list"))
+                .filter(player -> player.hasPermission("velocity.stafflist"))
                 .toList();
 
         source.sendMessage(Component.text(""));
