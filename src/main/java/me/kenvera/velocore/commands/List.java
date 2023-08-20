@@ -5,12 +5,17 @@ import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.Component;
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.LuckPermsProvider;
+import net.luckperms.api.model.user.User;
 
 public class List implements SimpleCommand {
     private final ProxyServer proxy;
+    private final LuckPerms luckPerms;
 
     public List(ProxyServer proxy) {
         this.proxy = proxy;
+        this.luckPerms = LuckPermsProvider.get();
     }
 
     @Override

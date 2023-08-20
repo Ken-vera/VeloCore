@@ -9,7 +9,6 @@ import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ReportListener implements SimpleCommand {
     private final ProxyServer proxy;
@@ -31,16 +30,14 @@ public class ReportListener implements SimpleCommand {
         String reportedPlayer = args[0];
         String reason = String.join(" ", args).substring(reportedPlayer.length() + 1);
 
-        if (!(source instanceof Player)) {
+        if (!(source instanceof Player reporter)) {
             source.sendMessage(Component.text("§cThis command can only be run by players."));
             return;
         }
 
-        Player reporter = (Player) source;
-
         List<Player> notifyPlayers = proxy.getAllPlayers().stream()
                 .filter(player -> player.hasPermission("velocity.report.notify") && player != reporter)
-                .collect(Collectors.toList());
+                .toList();
 
         if (notifyPlayers.isEmpty()) {
             source.sendMessage(Component.text("§cNo staff members available to notify."));
@@ -60,5 +57,23 @@ public class ReportListener implements SimpleCommand {
         }
 
         source.sendMessage(Component.text("§aReport submitted successfully."));
+    }
+
+    @Override
+    public List<String> suggest(Invocation invocation) {
+        String[] arguments = invocation.arguments();
+        if (arguments.length == 1) {
+            return proxy.getAllPlayers().stream()
+                    .filter(player -> !player.equals(invocation.source()))
+                    .filter(player -> !player.hasPermission("velocity.staff"))
+                    .map(Player::getUsername)
+                    .filter(name -> name.toLowerCase().startsWith(arguments[0].toLowerCase()))
+                    .toList();
+        }
+        return proxy.getAllPlayers().stream()
+                .filter(player -> !player.equals(invocation.source()))
+                .filter(player -> !player.hasPermission("velocity.staff"))
+                .map(Player::getUsername)
+                .toList();
     }
 }

@@ -2,6 +2,7 @@ package me.kenvera.velocore.commands;
 
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
+import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import net.kyori.adventure.text.Component;
@@ -75,6 +76,22 @@ public class Send implements SimpleCommand {
         if (Objects.equals(invocation.arguments()[0], "current")) {
 
         }
+    }
+
+    @Override
+    public List<String> suggest(Invocation invocation) {
+        String[] arguments = invocation.arguments();
+        if (arguments[0].equalsIgnoreCase("")) {
+            String partialName = arguments[0].toLowerCase();
+
+            List<String> onlinePlayer = proxy.getAllPlayers().stream()
+                    .map(Player::getUsername)
+                    .filter(name -> name.toLowerCase().startsWith(partialName))
+                    .toList();
+
+            return List.of(onlinePlayer.toString());
+        }
+        return List.of();
     }
 
     private boolean isOffline(String proxiedServer) {

@@ -9,7 +9,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class AltsChecker implements SimpleCommand {
     private final ProxyServer proxy;
@@ -23,12 +22,10 @@ public class AltsChecker implements SimpleCommand {
         CommandSource source = invocation.source();
         String[] args = invocation.arguments();
 
-        if (!(source instanceof Player)) {
+        if (!(source instanceof Player player)) {
             source.sendMessage(Component.text("This command can only be run by players."));
             return;
         }
-
-        Player player = (Player) source;
 
         if (!player.hasPermission("velocity.scan")) {
             player.sendMessage(Component.text("You don't have permission to run this command."));
@@ -45,7 +42,7 @@ public class AltsChecker implements SimpleCommand {
                 .filter(p -> p.getRemoteAddress().getAddress().getHostAddress()
                         .equals(player.getRemoteAddress().getAddress().getHostAddress()))
                 .filter(p -> p.getUsername().equalsIgnoreCase(targetUsername))
-                .collect(Collectors.toList());
+                .toList();
 
         if (playersWithSameIp.isEmpty()) {
             player.sendMessage(Component.text("No matching accounts found."));
@@ -64,5 +61,19 @@ public class AltsChecker implements SimpleCommand {
         } else {
             player.sendMessage(Component.text(targetUsername + " has not joined the server."));
         }
+    }
+
+    @Override
+    public List<String> suggest(Invocation invocation) {
+        String[] arguments = invocation.arguments();
+        if (arguments.length == 1) {
+            return proxy.getAllPlayers().stream()
+                    .map(Player::getUsername)
+                    .filter(name -> name.toLowerCase().startsWith(arguments[0].toLowerCase()))
+                    .toList();
+        }
+        return proxy.getAllPlayers().stream()
+                .map(Player::getUsername)
+                .toList();
     }
 }
