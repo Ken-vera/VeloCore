@@ -7,14 +7,22 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.Component;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
+import net.luckperms.api.cacheddata.CachedMetaData;
 import net.luckperms.api.model.user.User;
+
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public class List implements SimpleCommand {
     private final ProxyServer proxy;
+    private final Map<UUID, Long> playerOnlineSession;
     private final LuckPerms luckPerms;
 
-    public List(ProxyServer proxy) {
+    public List(ProxyServer proxy, Map<UUID, Long> playerOnlineSession) {
         this.proxy = proxy;
+        this.playerOnlineSession = playerOnlineSession;
         this.luckPerms = LuckPermsProvider.get();
     }
 
@@ -34,11 +42,33 @@ public class List implements SimpleCommand {
         source.sendMessage(Component.text("§aThere are ")
                 .append(Component.text(onlineStaff.size()))
                 .append(Component.text(" §aStaff[s] online:")));
+
         for (Player staffMember : onlineStaff) {
-            source.sendMessage(Component.text(staffMember.getUsername() )
+            UUID uuid = staffMember.getUniqueId();
+            User user = luckPerms.getUserManager().getUser(uuid);
+            long onlineTime = playerOnlineSession.getOrDefault(uuid, 0L);
+            long currentTime = System.currentTimeMillis();
+
+            long onlineSession = currentTime - onlineTime;
+            long totalMinutes = TimeUnit.MILLISECONDS.toMinutes(onlineSession);
+            long hours = totalMinutes / 60;
+            long minutes = totalMinutes % 60;
+            String formattedTime = "";
+
+            if (hours > 0) {
+                formattedTime += hours + "h ";
+            }
+            formattedTime += minutes + "m";
+
+            assert user != null;
+            CachedMetaData metaData = user.getCachedData().getMetaData();
+            String prefix = Objects.requireNonNull(metaData.getPrefix()).replaceAll("&", "§");
+
+            source.sendMessage(Component.text(prefix + " ")
+                    .append(Component.text(staffMember.getUsername()))
                     .append(Component.text(" §7- "))
-                    .append(Component.text("§7" + staffMember.getCurrentServer().get().getServerInfo().getName() ))
-                    .append(Component.text(" ")));
+                    .append(Component.text("§7" + staffMember.getCurrentServer().get().getServerInfo().getName()))
+                    .append(Component.text("§7 " + formattedTime)));
         }
         source.sendMessage(Component.text(""));
     }

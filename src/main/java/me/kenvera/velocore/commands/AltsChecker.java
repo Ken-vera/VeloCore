@@ -8,6 +8,7 @@ import com.velocitypowered.api.proxy.ServerConnection;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
+import java.net.InetSocketAddress;
 import java.util.List;
 
 public class AltsChecker implements SimpleCommand {
@@ -38,11 +39,19 @@ public class AltsChecker implements SimpleCommand {
         }
 
         String targetUsername = args[0].toLowerCase(); // Make username lowercase for case-insensitivity
+        InetSocketAddress playerAddress = player.getRemoteAddress();
+
         List<Player> playersWithSameIp = proxy.getAllPlayers().stream()
-                .filter(p -> p.getRemoteAddress().getAddress().getHostAddress()
-                        .equals(player.getRemoteAddress().getAddress().getHostAddress()))
-                .filter(p -> p.getUsername().equalsIgnoreCase(targetUsername))
+                .filter(p -> !p.equals(player))
+                .filter(p -> p.getRemoteAddress().getAddress().equals(playerAddress.getAddress()))
+                .filter(p -> !p.getUsername().equalsIgnoreCase(targetUsername))
                 .toList();
+
+//        List<Player> playersWithSameIp = proxy.getAllPlayers().stream()
+//                .filter(p -> p.getRemoteAddress().getAddress().getHostAddress()
+//                        .equals(player.getRemoteAddress().getAddress().getHostAddress()))
+//                .filter(p -> p.getUsername().equalsIgnoreCase(targetUsername))
+//                .toList();
 
         if (playersWithSameIp.isEmpty()) {
             player.sendMessage(Component.text("No matching accounts found."));
