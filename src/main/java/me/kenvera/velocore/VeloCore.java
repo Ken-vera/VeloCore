@@ -11,6 +11,7 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import me.kenvera.velocore.commands.*;
+import me.kenvera.velocore.discordshake.DiscordConnection;
 import me.kenvera.velocore.listeners.OnlineSession;
 import me.kenvera.velocore.listeners.StaffChat;
 import net.kyori.adventure.text.Component;
@@ -29,6 +30,7 @@ public final class VeloCore{
     private final ProxyServer proxy;
     private final Map<UUID, Long> playerOnlineSession = new HashMap<>();
     private final Map<UUID, Boolean> playerStaffChat = new HashMap<>();
+    private DiscordConnection discordConnection;
     @Inject
     public VeloCore(ProxyServer proxy) {
         this.proxy = proxy;
@@ -39,6 +41,11 @@ public final class VeloCore{
         proxy.getConsoleCommandSource().sendMessage(Component.text());
         proxy.getConsoleCommandSource().sendMessage(Component.text("§eVeloCore §aby §bKenvera §ais enabled!"));
         proxy.getConsoleCommandSource().sendMessage(Component.text());
+
+        // DISCORD INITIATION
+        discordConnection = new DiscordConnection(this);
+        discordConnection.connect("MTE0NTMyMTMzOTUyMDAzNjkzNA.GTGhdW.yvd6PWQ1W99QZ7fevuTYn8Px-ADW8FvvrKQBug");
+        discordConnection.sendStaffMessage("Ojan", "TEST SAYANG");
 
         EventManager eventManager = proxy.getEventManager();
         CommandManager commandManager = proxy.getCommandManager();
