@@ -1,7 +1,13 @@
 package me.kenvera.velocore.commands;
 
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import com.mojang.brigadier.tree.LiteralCommandNode;
+import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
-import com.velocitypowered.api.command.SimpleCommand;
+import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
@@ -12,99 +18,134 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public class Send implements SimpleCommand {
-    private final ProxyServer proxy;
+public final class Send {
+    public static BrigadierCommand createBrigadierCommand(final ProxyServer proxy) {
+        LiteralCommandNode<CommandSource> node = LiteralArgumentBuilder
+                .<CommandSource>literal("send")
+                .requires(src -> src.getPermissionValue("velocity.staff") != Tristate.UNDEFINED)
+                .then(RequiredArgumentBuilder.<CommandSource, String>argument("player", StringArgumentType.word())
+                        .suggests((ctx, builder) -> {
+                            String inputPart = ctx.getInput().toLowerCase();
+                            String[] inputParts = inputPart.split(" ");
 
-    public Send(ProxyServer proxy) {
-        this.proxy = proxy;
-    }
 
-    @Override
-    public void execute(Invocation invocation) {
-        CommandSource source = invocation.source();
-        if (!source.hasPermission("velocity.send")) {
-            source.sendMessage(Component.text("§cYou don't have permission to run this command!"));
-            return;
-        }
+                            List<String> suggestions = new ArrayList<>();
 
-        List<String> listServers = new ArrayList<>(proxy
-                .getAllServers()
-                .stream()
-                .map(server -> server.getServerInfo().getName())
-                .toList());
+                            if (ctx.getSource().hasPermission("velocity.send.all")) {
+                                suggestions.add("all");
+                            }
 
-        if (invocation.arguments().length == 0) {
-            source.sendMessage(Component.text("§cWrong command usage!"));
-            return;
-        }
+                            if (ctx.getSource().hasPermission("velocity.send.current")) {
+                                suggestions.add("current");
+                            }
 
-        if (invocation.arguments().length == 1) {
-            source.sendMessage(Component.text("§cWrong command usage!"));
-            return;
-        }
+                            for (Player player : proxy.getAllPlayers()) {
+                                if (!player.equals(ctx.getSource())) {
+                                    String playerName = player.getUsername();
+                                    suggestions.add(playerName);
+                                }
+                            }
 
-        if (Objects.equals(invocation.arguments()[0], "all")) {
-            if (!source.hasPermission("velocity.send.all")) {
-                source.sendMessage(Component.text("§cYou don't have permission to run this command!"));
-                return;
-            }
-            if (listServers.contains(invocation.arguments()[1])) {
-                Optional<RegisteredServer> targetServer = proxy.getServer(invocation.arguments()[1]);
-                if (targetServer.isEmpty()) {
-                    source.sendMessage(Component.text("§c" + invocation.arguments()[1] + " server is not available!"));
-                    return;
-                }
-                if (isOffline(targetServer.get().getServerInfo().getName())) {
-                    source.sendMessage(Component.text("§c" + invocation.arguments()[1] + " can't be reach!"));
-                    return;
-                }
-                proxy
-                        .getAllPlayers()
-                        .stream()
-                        .filter(player -> !Objects.equals(player.getCurrentServer().get().getServerInfo().getName(), invocation.arguments()[1]))
-                        .forEach(player -> player.createConnectionRequest(targetServer.get()).fireAndForget());
-                source.sendMessage(Component.text("§a" + "Succesfully sent " +
-                        proxy.getAllPlayers()
-                                .stream()
-                                .filter(player -> !Objects.equals(player.getCurrentServer().get().getServerInfo().getName(), invocation.arguments()[1])).toList().size() +
-                        " Players to " + targetServer.get().getServerInfo().getName()));
-            } else {
-                source.sendMessage(Component.text("§c" + invocation.arguments()[1] + " is not a valid server!"));
-            }
-        }
+                            for (String suggestion : suggestions) {
+                                if (inputParts.length == 2) {
+                                    String input = inputParts[1];
+                                    if (suggestion.toLowerCase().startsWith(input)) {
+                                        builder.suggest(suggestion);
+                                    }
+                                } else if (inputParts.length <= 2) {
+                                    builder.suggest(suggestion);
+                                }
+                            }
+                            return builder.buildFuture();
+                        })
+                        .then(RequiredArgumentBuilder.<CommandSource, String>argument("server", StringArgumentType.string())
+                                .suggests((ctx, builder) -> {
+                                    String inputPart = ctx.getInput().toLowerCase();
+                                    String[] inputParts = inputPart.split(" ");
 
-        if (Objects.equals(invocation.arguments()[0], "current")) {
+                                    List<String> suggestions = new ArrayList<>();
 
-        }
-    }
+                                    proxy.getAllServers().forEach(server -> suggestions.add(server.getServerInfo().getName()));
 
-    @Override
-    public List<String> suggest(Invocation invocation) {
-        String[] arguments = invocation.arguments();
-        if (arguments[0].equalsIgnoreCase("")) {
-            String partialName = arguments[0].toLowerCase();
+                                    for (String suggestion : suggestions) {
+                                        if (inputParts.length == 3) {
+                                            String input = inputParts[2];
+                                            if (suggestion.toLowerCase().startsWith(input)) {
+                                                builder.suggest(suggestion);
+                                            }
+                                        } else if (inputParts.length <= 3) {
+                                            builder.suggest(suggestion);
+                                        }
+                                    }
+                                    return builder.buildFuture();
+                                })
+                                .executes(ctx -> {
+                                    CommandSource source = ctx.getSource();
+                                    Player playerSource = (Player) source;
+                                    String target = StringArgumentType.getString(ctx, "player");
+                                    String server = StringArgumentType.getString(ctx, "server");
 
-            List<String> onlinePlayer = proxy.getAllPlayers().stream()
-                    .map(Player::getUsername)
-                    .filter(name -> name.toLowerCase().startsWith(partialName))
-                    .toList();
+                                    if (target.equalsIgnoreCase("all")) {
+                                        if (source.hasPermission("velocity.send.all")) {
+                                            Optional<RegisteredServer> targetServer = proxy.getServer(server);
 
-            return List.of(onlinePlayer.toString());
-        }
-        return List.of();
-    }
+                                            if (targetServer.isPresent()) {
+                                                proxy.getAllPlayers().stream()
+                                                        .filter(player -> !player.equals(playerSource))
+                                                        .filter(player -> !Objects.equals(player.getCurrentServer().get().getServerInfo().getName(), server))
+                                                        .forEach(player -> player.createConnectionRequest(targetServer.get()).fireAndForget());
+                                                source.sendMessage(Component.text("§aSuccessfully sent " +
+                                                        proxy.getAllPlayers().stream()
+                                                                .filter(player -> !player.equals(playerSource))
+                                                                .filter(player -> !Objects.equals(player.getCurrentServer().get().getServerInfo().getName(), server)).toList().size() +
+                                                        " Players to " + targetServer.get().getServerInfo().getName()));
+                                            } else {
+                                                source.sendMessage(Component.text("§cServer " + server + "  seems offline."));
+                                            }
+                                        } else {
+                                            source.sendMessage(Component.text("§cYou don't have permission to run this command!"));
+                                        }
+                                    } else if (target.equalsIgnoreCase("current")) {
+                                        if (source.hasPermission("velocity.send.current")) {
+                                            Optional<RegisteredServer> targetServer = proxy.getServer(server);
 
-    private boolean isOffline(String proxiedServer) {
-        Optional<RegisteredServer> targetServer = proxy.getServer(proxiedServer);
-        if (targetServer.isPresent()) {
-            RegisteredServer server = targetServer.get();
-            try {
-                server.ping();
-                return false;
-            } catch (Exception e) {
-                return true;
-            }
-        }
-        return true;
+                                            if (targetServer.isPresent()) {
+                                                proxy.getAllPlayers().stream()
+                                                        .filter(player -> !player.equals(playerSource))
+                                                        .filter(player -> Objects.equals(player.getCurrentServer().get().getServerInfo().getName(), playerSource.getCurrentServer().get().getServerInfo().getName()))
+                                                        .forEach(player -> player.createConnectionRequest(targetServer.get()).fireAndForget());
+                                                source.sendMessage(Component.text("§aSuccessfully sent " +
+                                                        proxy.getAllPlayers().stream()
+                                                                .filter(player -> !player.equals(playerSource))
+                                                                .filter(player -> Objects.equals(player.getCurrentServer().get().getServerInfo().getName(), playerSource.getCurrentServer().get().getServerInfo().getName())).toList().size() +
+                                                        " Players to " + targetServer.get().getServerInfo().getName()));
+                                            } else {
+                                                source.sendMessage(Component.text("§cServer " + server + " seems to be offline."));
+                                            }
+                                        } else {
+                                            source.sendMessage(Component.text("§cYou don't have permission to run this command!"));
+                                        }
+                                    } else {
+                                        Optional<Player> targetPlayerOptional = proxy.getPlayer(target);
+                                        if (targetPlayerOptional.isPresent()) {
+                                            Player targetPlayer = targetPlayerOptional.get();
+                                            Optional<RegisteredServer> targetServer = proxy.getServer(server);
+                                            if (targetServer.isPresent()) {
+                                                targetPlayer.createConnectionRequest(targetServer.get()).fireAndForget();
+                                                source.sendMessage(Component.text("§aSuccesfully sent " + targetPlayer.getUsername() + " to " + targetServer.get().getServerInfo().getName()));
+                                            } else {
+                                                source.sendMessage(Component.text("§cServer " + server + " seems to be offline."));
+                                            }
+                                        } else {
+                                            source.sendMessage(Component.text("§cPlayer " + target + " seems not available within the server."));
+                                        }
+                                    }
+                                    return Command.SINGLE_SUCCESS;
+                                }))
+                        )
+                .build();
+        return new BrigadierCommand(node);
     }
 }
+
+

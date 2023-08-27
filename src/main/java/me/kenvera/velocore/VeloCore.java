@@ -1,7 +1,9 @@
 package me.kenvera.velocore;
 
 import com.google.inject.Inject;
+import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandManager;
+import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.event.EventManager;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
@@ -36,27 +38,24 @@ public final class VeloCore{
         proxy.getConsoleCommandSource().sendMessage(Component.text("§eVeloCore §aby §bKenvera §ais enabled!"));
         proxy.getConsoleCommandSource().sendMessage(Component.text());
 
-        initializeEventListeners();
-
+        EventManager eventManager = proxy.getEventManager();
+        OnlineSession onlineSession = new OnlineSession(proxy, playerOnlineSession);
         CommandManager commandManager = proxy.getCommandManager();
+        CommandMeta commandMeta = commandManager.metaBuilder("send").plugin(this).build();
 
         for (RegisteredServer server : proxy.getAllServers()) {
             String serverName = server.getServerInfo().getName();
             commandManager.register(serverName, new Aliases(proxy, serverName));
         }
 
-        commandManager.register("send", new Send(proxy));
+        BrigadierCommand commandToRegister = Send.createBrigadierCommand(proxy);
+        commandManager.register(commandMeta, commandToRegister);
+
         commandManager.register("stafflist", new List(proxy, playerOnlineSession), "sl");
         commandManager.register("globallist", new GlobalList(proxy), "glist");
         commandManager.register("report", new ReportListener(proxy));
         commandManager.register("checkalts", new AltsChecker(proxy));
         commandManager.register("find", new Find(proxy, playerOnlineSession));
-    }
-
-    public void initializeEventListeners() {
-        EventManager eventManager = proxy.getEventManager();
-
-        OnlineSession onlineSession = new OnlineSession(playerOnlineSession);
 
         eventManager.register(this, onlineSession);
     }
