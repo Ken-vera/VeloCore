@@ -44,7 +44,6 @@ public final class VeloCore{
 
         // DISCORD INITIATION
         discordConnection = new DiscordConnection(this);
-        discordConnection.connect("MTE0NTMyMTMzOTUyMDAzNjkzNA.GTGhdW.yvd6PWQ1W99QZ7fevuTYn8Px-ADW8FvvrKQBug");
         discordConnection.sendStaffMessage("Ojan", "TEST SAYANG");
 
         EventManager eventManager = proxy.getEventManager();
