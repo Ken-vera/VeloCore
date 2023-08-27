@@ -7,9 +7,8 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.Component;
 
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class Find implements SimpleCommand {
@@ -82,6 +81,9 @@ public class Find implements SimpleCommand {
                     .map(Player::getUsername)
                     .filter(name -> name.toLowerCase().startsWith(args[0].toLowerCase()))
                     .toList();
+        }
+        if (args.length >= 1) {
+            return Collections.emptyList();
         }
         return proxy.getAllPlayers().stream()
                 .map(Player::getUsername)

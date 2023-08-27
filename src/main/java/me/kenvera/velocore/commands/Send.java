@@ -28,7 +28,6 @@ public final class Send {
                             String inputPart = ctx.getInput().toLowerCase();
                             String[] inputParts = inputPart.split(" ");
 
-
                             List<String> suggestions = new ArrayList<>();
 
                             if (ctx.getSource().hasPermission("velocity.send.all")) {
@@ -147,5 +146,3 @@ public final class Send {
         return new BrigadierCommand(node);
     }
 }
-
-

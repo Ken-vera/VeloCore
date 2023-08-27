@@ -9,6 +9,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.net.InetSocketAddress;
+import java.util.Collections;
 import java.util.List;
 
 public class AltsChecker implements SimpleCommand {
@@ -74,12 +75,15 @@ public class AltsChecker implements SimpleCommand {
 
     @Override
     public List<String> suggest(Invocation invocation) {
-        String[] arguments = invocation.arguments();
-        if (arguments.length == 1) {
+        String[] args = invocation.arguments();
+        if (args.length == 1) {
             return proxy.getAllPlayers().stream()
                     .map(Player::getUsername)
-                    .filter(name -> name.toLowerCase().startsWith(arguments[0].toLowerCase()))
+                    .filter(name -> name.toLowerCase().startsWith(args[0].toLowerCase()))
                     .toList();
+        }
+        if (args.length >= 1) {
+            return Collections.emptyList();
         }
         return proxy.getAllPlayers().stream()
                 .map(Player::getUsername)

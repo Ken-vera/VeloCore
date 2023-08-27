@@ -12,6 +12,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import me.kenvera.velocore.commands.*;
 import me.kenvera.velocore.listeners.OnlineSession;
+import me.kenvera.velocore.listeners.StaffChat;
 import net.kyori.adventure.text.Component;
 
 import java.util.HashMap;
@@ -27,6 +28,7 @@ import java.util.UUID;
 public final class VeloCore{
     private final ProxyServer proxy;
     private final Map<UUID, Long> playerOnlineSession = new HashMap<>();
+    private final Map<UUID, Boolean> playerStaffChat = new HashMap<>();
     @Inject
     public VeloCore(ProxyServer proxy) {
         this.proxy = proxy;
@@ -39,7 +41,6 @@ public final class VeloCore{
         proxy.getConsoleCommandSource().sendMessage(Component.text());
 
         EventManager eventManager = proxy.getEventManager();
-        OnlineSession onlineSession = new OnlineSession(proxy, playerOnlineSession);
         CommandManager commandManager = proxy.getCommandManager();
         CommandMeta commandMeta = commandManager.metaBuilder("send").plugin(this).build();
 
@@ -56,7 +57,9 @@ public final class VeloCore{
         commandManager.register("report", new ReportListener(proxy));
         commandManager.register("checkalts", new AltsChecker(proxy));
         commandManager.register("find", new Find(proxy, playerOnlineSession));
+        commandManager.register("staffchat", new me.kenvera.velocore.commands.StaffChat(proxy, playerStaffChat), "sc");
 
-        eventManager.register(this, onlineSession);
+        eventManager.register(this, new OnlineSession(proxy, playerOnlineSession));
+        eventManager.register(this, new StaffChat(proxy, playerStaffChat));
     }
 }

@@ -8,6 +8,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 
+import java.util.Collections;
 import java.util.List;
 
 public class ReportListener implements SimpleCommand {
@@ -61,18 +62,19 @@ public class ReportListener implements SimpleCommand {
 
     @Override
     public List<String> suggest(Invocation invocation) {
-        String[] arguments = invocation.arguments();
-        if (arguments.length == 1) {
+        String[] args = invocation.arguments();
+        if (args.length == 1) {
             return proxy.getAllPlayers().stream()
                     .filter(player -> !player.equals(invocation.source()))
                     .filter(player -> !player.hasPermission("velocity.staff"))
                     .map(Player::getUsername)
-                    .filter(name -> name.toLowerCase().startsWith(arguments[0].toLowerCase()))
+                    .filter(name -> name.toLowerCase().startsWith(args[0].toLowerCase()))
                     .toList();
         }
+        if (args.length >= 1) {
+            return Collections.emptyList();
+        }
         return proxy.getAllPlayers().stream()
-                .filter(player -> !player.equals(invocation.source()))
-                .filter(player -> !player.hasPermission("velocity.staff"))
                 .map(Player::getUsername)
                 .toList();
     }
