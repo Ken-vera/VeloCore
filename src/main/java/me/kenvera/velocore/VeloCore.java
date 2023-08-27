@@ -13,7 +13,6 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import me.kenvera.velocore.commands.*;
 import me.kenvera.velocore.discordshake.DiscordConnection;
 import me.kenvera.velocore.listeners.OnlineSession;
-import me.kenvera.velocore.listeners.StaffChat;
 import net.kyori.adventure.text.Component;
 
 import java.util.HashMap;
@@ -48,24 +47,26 @@ public final class VeloCore{
 
         EventManager eventManager = proxy.getEventManager();
         CommandManager commandManager = proxy.getCommandManager();
-        CommandMeta commandMeta = commandManager.metaBuilder("send").plugin(this).build();
+        CommandMeta commandMetaSend = commandManager.metaBuilder("send").plugin(this).build();
+        CommandMeta commandMetaStaff = commandManager.metaBuilder("staffchat").aliases("sc").plugin(this).build();
 
         for (RegisteredServer server : proxy.getAllServers()) {
             String serverName = server.getServerInfo().getName();
             commandManager.register(serverName, new Aliases(proxy, serverName));
         }
 
-        BrigadierCommand commandToRegister = Send.createBrigadierCommand(proxy);
-        commandManager.register(commandMeta, commandToRegister);
+        BrigadierCommand commandSend = Send.createBrigadierCommand(proxy);
+        BrigadierCommand commandStaff = StaffChat.createBrigadierCommand(proxy, playerStaffChat);
+        commandManager.register(commandMetaSend, commandSend);
+        commandManager.register(commandMetaStaff, commandStaff);
 
         commandManager.register("stafflist", new List(proxy, playerOnlineSession), "sl");
         commandManager.register("globallist", new GlobalList(proxy), "glist");
         commandManager.register("report", new ReportListener(proxy));
         commandManager.register("checkalts", new AltsChecker(proxy));
         commandManager.register("find", new Find(proxy, playerOnlineSession));
-        commandManager.register("staffchat", new me.kenvera.velocore.commands.StaffChat(proxy, playerStaffChat), "sc");
 
         eventManager.register(this, new OnlineSession(proxy, playerOnlineSession));
-        eventManager.register(this, new StaffChat(proxy, playerStaffChat));
+        eventManager.register(this, new me.kenvera.velocore.listeners.StaffChat(proxy, playerStaffChat));
     }
 }
