@@ -29,13 +29,13 @@ public class List implements SimpleCommand {
     @Override
     public void execute(Invocation invocation) {
         CommandSource source = invocation.source();
-        if (!source.hasPermission("velocity.stafflist")) {
+        if (source.getPermissionValue("velocity.staff") != Tristate.TRUE) {
             source.sendMessage(Component.text("§cYou don't have permission to run this command!"));
             return;
         }
 
         java.util.List<Player> onlineStaff = proxy.getAllPlayers().stream()
-                .filter(player -> player.hasPermission("velocity.stafflist"))
+                .filter(player -> player.hasPermission("velocity.staff"))
                 .toList();
 
         source.sendMessage(Component.text(""));

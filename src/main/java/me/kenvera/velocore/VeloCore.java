@@ -7,14 +7,19 @@ import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.event.EventManager;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
+import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import me.kenvera.velocore.commands.*;
+import me.kenvera.velocore.datamanager.DataBase;
 import me.kenvera.velocore.discordshake.DiscordConnection;
+import me.kenvera.velocore.listeners.DiscordChannel;
 import me.kenvera.velocore.listeners.OnlineSession;
+import me.kenvera.velocore.listeners.StaffChannel;
 import net.kyori.adventure.text.Component;
 
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -29,7 +34,10 @@ public final class VeloCore{
     private final ProxyServer proxy;
     private final Map<UUID, Long> playerOnlineSession = new HashMap<>();
     private final Map<UUID, Boolean> playerStaffChat = new HashMap<>();
+    private DataBase dataBase;
+    private StaffChannel staffChannel;
     private DiscordConnection discordConnection;
+    private DiscordChannel discordChannel;
     @Inject
     public VeloCore(ProxyServer proxy) {
         this.proxy = proxy;
@@ -40,10 +48,6 @@ public final class VeloCore{
         proxy.getConsoleCommandSource().sendMessage(Component.text());
         proxy.getConsoleCommandSource().sendMessage(Component.text("§eVeloCore §aby §bKenvera §ais enabled!"));
         proxy.getConsoleCommandSource().sendMessage(Component.text());
-
-        // DISCORD INITIATION
-        discordConnection = new DiscordConnection(this);
-        discordConnection.sendStaffMessage("Ojan", "TEST SAYANG");
 
         EventManager eventManager = proxy.getEventManager();
         CommandManager commandManager = proxy.getCommandManager();
@@ -66,7 +70,36 @@ public final class VeloCore{
         commandManager.register("checkalts", new AltsChecker(proxy));
         commandManager.register("find", new Find(proxy, playerOnlineSession));
 
+        // SQLITE INITIATION
+        try {
+            dataBase = new DataBase(proxy, playerStaffChat);
+            dataBase.connect("plugins/velocore/staffdata.db");
+            dataBase.createTables();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        dataBase.loadStaffData();
+
+        // DISCORD INITIATION
+        discordConnection = new DiscordConnection(this);
+        staffChannel = new StaffChannel(proxy, playerStaffChat, discordConnection);
+        discordChannel = new DiscordChannel(this, staffChannel, discordConnection);
+        discordConnection.disconnect();
+        discordConnection.connect("MTE0NTMyMTMzOTUyMDAzNjkzNA.GTGhdW.yvd6PWQ1W99QZ7fevuTYn8Px-ADW8FvvrKQBug", discordChannel);
+
+
+
         eventManager.register(this, new OnlineSession(proxy, playerOnlineSession));
-        eventManager.register(this, new me.kenvera.velocore.listeners.StaffChat(proxy, playerStaffChat));
+        eventManager.register(this, staffChannel);
+        eventManager.register(this, discordChannel);
+    }
+
+    @Subscribe
+    public void onPR(ProxyShutdownEvent event) {
+        discordConnection.disconnect();
+        dataBase.saveStaffData();
+        proxy.getConsoleCommandSource().sendMessage(Component.text());
+        proxy.getConsoleCommandSource().sendMessage(Component.text("§cDisabling §eVeloCore!"));
+        proxy.getConsoleCommandSource().sendMessage(Component.text());
     }
 }
