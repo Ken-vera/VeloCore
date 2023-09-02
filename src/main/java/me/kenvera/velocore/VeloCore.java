@@ -95,7 +95,7 @@ public final class VeloCore{
     }
 
     @Subscribe
-    public void onPR(ProxyShutdownEvent event) {
+    public void onProxyShutdown(ProxyShutdownEvent event) {
         discordConnection.disconnect();
         dataBase.saveStaffData();
         proxy.getConsoleCommandSource().sendMessage(Component.text());
