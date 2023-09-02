@@ -54,6 +54,7 @@ public final class VeloCore{
         CommandManager commandManager = proxy.getCommandManager();
         CommandMeta commandMetaSend = commandManager.metaBuilder("send").plugin(this).build();
         CommandMeta commandMetaStaff = commandManager.metaBuilder("staffchat").aliases("sc").plugin(this).build();
+        CommandMeta commandMetaStaffList = commandManager.metaBuilder("stafflist").aliases("sl").plugin(this).build();
 
         for (RegisteredServer server : proxy.getAllServers()) {
             String serverName = server.getServerInfo().getName();
@@ -62,10 +63,11 @@ public final class VeloCore{
 
         BrigadierCommand commandSend = Send.createBrigadierCommand(proxy);
         BrigadierCommand commandStaff = StaffChat.createBrigadierCommand(proxy, playerStaffChat, playerStaffChatMute);
+        BrigadierCommand commandStaffList = StaffList.createBrigadierCommand(proxy, playerOnlineSession);
         commandManager.register(commandMetaSend, commandSend);
         commandManager.register(commandMetaStaff, commandStaff);
+        commandManager.register(commandMetaStaffList, commandStaffList);
 
-        commandManager.register("stafflist", new List(proxy, playerOnlineSession), "sl");
         commandManager.register("globallist", new GlobalList(proxy), "glist");
         commandManager.register("report", new ReportListener(proxy));
         commandManager.register("checkalts", new AltsChecker(proxy));
