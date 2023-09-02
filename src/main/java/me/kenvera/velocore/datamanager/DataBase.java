@@ -11,9 +11,11 @@ public class DataBase {
     private final ProxyServer proxy;
     private static Connection connection;
     private final Map<UUID, Boolean> playerStaffChat;
-    public DataBase(ProxyServer proxy, Map<UUID, Boolean> playerStaffChat) {
+    private final Map<UUID, Boolean> playerStaffChatMute;
+    public DataBase(ProxyServer proxy, Map<UUID, Boolean> playerStaffChat, Map<UUID, Boolean> playerStaffChatMute) {
         this.proxy = proxy;
         this.playerStaffChat = playerStaffChat;
+        this.playerStaffChatMute = playerStaffChatMute;
     }
 
     public void connect(String databasePath) throws SQLException {
@@ -57,12 +59,14 @@ public class DataBase {
     public void loadStaffData() {
         try {
             connection = getConnection();
-            try (PreparedStatement statement = connection.prepareStatement("SELECT uuid, staff_channel FROM player_data")) {
+            try (PreparedStatement statement = connection.prepareStatement("SELECT uuid, staff_channel, staff_muted FROM player_data")) {
                 try (ResultSet resultSet = statement.executeQuery()) {
                     while (resultSet.next()) {
                         UUID uuid = UUID.fromString(resultSet.getString("uuid"));
                         boolean staffChat = resultSet.getBoolean("staff_channel");
+                        boolean staffChatMute = resultSet.getBoolean("staff_muted");
                         playerStaffChat.put(uuid, staffChat);
+                        playerStaffChatMute.put(uuid, staffChatMute);
                     }
                 }
             }
@@ -78,8 +82,10 @@ public class DataBase {
                 for (Map.Entry<UUID, Boolean> entry : playerStaffChat.entrySet()) {
                     UUID uuid = entry.getKey();
                     boolean staffChat = entry.getValue();
+                    boolean staffChatMute = playerStaffChatMute.getOrDefault(uuid, false);
                     statement.setString(1, uuid.toString());
                     statement.setBoolean(2, staffChat);
+                    statement.setBoolean(3, staffChatMute);
                     statement.executeUpdate();
                 }
             }

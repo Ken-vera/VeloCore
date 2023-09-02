@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public final class StaffChat {
-    public static BrigadierCommand createBrigadierCommand(final ProxyServer proxy, Map<UUID, Boolean> playerStaffChat) {
+    public static BrigadierCommand createBrigadierCommand(final ProxyServer proxy, Map<UUID, Boolean> playerStaffChat, Map<UUID, Boolean> playerStaffChatMute) {
         LiteralCommandNode<CommandSource> node = LiteralArgumentBuilder
                 .<CommandSource>literal("staffchat")
                 .requires(src -> src.getPermissionValue("velocity.staff") != Tristate.UNDEFINED)
@@ -28,6 +28,7 @@ public final class StaffChat {
                             java.util.List<String> suggestions = new ArrayList<>();
 
                             suggestions.add("toggle");
+                            suggestions.add("mute");
 
                             for (String suggestion : suggestions) {
                                 if (inputParts.length == 2) {
@@ -56,6 +57,18 @@ public final class StaffChat {
                                 } else {
                                     playerStaffChat.put(uuid, false);
                                     playerSource.sendMessage(Component.text("§7[§cStaffChat§7] §cStaff Chat is Disabled!"));
+                                }
+                            }
+
+                            if (subCommand.equalsIgnoreCase("mute")) {
+                                boolean currenStatus = playerStaffChatMute.getOrDefault(uuid, false);
+
+                                if (!currenStatus) {
+                                    playerStaffChatMute.put(uuid, true);
+                                    playerSource.sendMessage(Component.text("§7[§cStaffChat§7] §aStaff Chat is Muted!"));
+                                } else {
+                                    playerStaffChatMute.put(uuid, false);
+                                    playerSource.sendMessage(Component.text("§7[§cStaffChat§7] §aStaff Chat is Unmuted!"));
                                 }
                             }
 

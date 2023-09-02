@@ -34,6 +34,7 @@ public final class VeloCore{
     private final ProxyServer proxy;
     private final Map<UUID, Long> playerOnlineSession = new HashMap<>();
     private final Map<UUID, Boolean> playerStaffChat = new HashMap<>();
+    private final Map<UUID, Boolean> playerStaffChatMute = new HashMap<>();
     private DataBase dataBase;
     private StaffChannel staffChannel;
     private DiscordConnection discordConnection;
@@ -60,7 +61,7 @@ public final class VeloCore{
         }
 
         BrigadierCommand commandSend = Send.createBrigadierCommand(proxy);
-        BrigadierCommand commandStaff = StaffChat.createBrigadierCommand(proxy, playerStaffChat);
+        BrigadierCommand commandStaff = StaffChat.createBrigadierCommand(proxy, playerStaffChat, playerStaffChatMute);
         commandManager.register(commandMetaSend, commandSend);
         commandManager.register(commandMetaStaff, commandStaff);
 
@@ -72,7 +73,7 @@ public final class VeloCore{
 
         // SQLITE INITIATION
         try {
-            dataBase = new DataBase(proxy, playerStaffChat);
+            dataBase = new DataBase(proxy, playerStaffChat, playerStaffChatMute);
             dataBase.connect("plugins/velocore/staffdata.db");
             dataBase.createTables();
         } catch (SQLException e) {
@@ -82,7 +83,7 @@ public final class VeloCore{
 
         // DISCORD INITIATION
         discordConnection = new DiscordConnection(this);
-        staffChannel = new StaffChannel(proxy, playerStaffChat, discordConnection);
+        staffChannel = new StaffChannel(proxy, playerStaffChat, playerStaffChatMute, discordConnection);
         discordChannel = new DiscordChannel(this, staffChannel, discordConnection);
         discordConnection.disconnect();
         discordConnection.connect("MTE0NTMyMTMzOTUyMDAzNjkzNA.GTGhdW.yvd6PWQ1W99QZ7fevuTYn8Px-ADW8FvvrKQBug", discordChannel);

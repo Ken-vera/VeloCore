@@ -22,11 +22,13 @@ import java.util.UUID;
 public class StaffChannel {
     private final ProxyServer proxy;
     private final Map<UUID, Boolean> playerStaffChat;
+    private final Map<UUID, Boolean> playerStaffChatMute;
     private final LuckPerms luckPerms;
     private final DiscordConnection discordConnection;
-    public StaffChannel(ProxyServer proxy, Map<UUID, Boolean> playerStaffChat, DiscordConnection discordConnection) {
+    public StaffChannel(ProxyServer proxy, Map<UUID, Boolean> playerStaffChat, Map<UUID, Boolean> playerStaffChatMute, DiscordConnection discordConnection) {
         this.proxy = proxy;
         this.playerStaffChat = playerStaffChat;
+        this.playerStaffChatMute = playerStaffChatMute;
         this.luckPerms = LuckPermsProvider.get();
         this.discordConnection = discordConnection;
     }
@@ -44,12 +46,19 @@ public class StaffChannel {
             CachedMetaData metaData = user.getCachedData().getMetaData();
             String prefix = Objects.requireNonNull(metaData.getPrefix()).replaceAll("&", "§");
             boolean currentStatus = playerStaffChat.getOrDefault(uuid, false);
+            boolean muteStatus = playerStaffChatMute.getOrDefault(uuid, false);
 
             if (currentStatus) {
                 for (Player player : proxy.getAllPlayers()) {
                     if (player.getPermissionValue("velocity.staff") == Tristate.TRUE) {
-                        event.setResult(PlayerChatEvent.ChatResult.denied());
-                        player.sendMessage(Component.text("§7[§cStaffChat§7] [§6" + server.toUpperCase() + "§7] " + prefix + " " + sender.getUsername() + " : §7" + message));
+                        if (muteStatus) {
+                            event.setResult(PlayerChatEvent.ChatResult.denied());
+                            message = "§k" + message.replaceAll(".", "§k$0");
+                            player.sendMessage(Component.text("§7[§cStaffChat§7] [§6" + server.toUpperCase() + "§7] " + prefix + " " + sender.getUsername() + " : §7" + message));
+                        } else {
+                            event.setResult(PlayerChatEvent.ChatResult.denied());
+                            player.sendMessage(Component.text("§7[§cStaffChat§7] [§6" + server.toUpperCase() + "§7] " + prefix + " " + sender.getUsername() + " : §7" + message));
+                        }
                     }
                 }
                 System.out.println("§7[§cStaffChat§7] [§6" + server.toUpperCase() + "§7] " + prefix + " " + sender.getUsername() + " : §7" + message);
