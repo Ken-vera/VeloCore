@@ -17,6 +17,7 @@ import me.kenvera.velocore.discordshake.DiscordConnection;
 import me.kenvera.velocore.listeners.DiscordChannel;
 import me.kenvera.velocore.listeners.OnlineSession;
 import me.kenvera.velocore.listeners.StaffChannel;
+import me.kenvera.velocore.listeners.StaffSession;
 import net.kyori.adventure.text.Component;
 
 import java.sql.SQLException;
@@ -47,7 +48,7 @@ public final class VeloCore{
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
         proxy.getConsoleCommandSource().sendMessage(Component.text());
-        proxy.getConsoleCommandSource().sendMessage(Component.text("§eVeloCore §aby §bKenvera §ais enabled!"));
+        proxy.getConsoleCommandSource().sendMessage(Component.text("§f[§eVeloCore§f] §aPlugin Loaded!"));
         proxy.getConsoleCommandSource().sendMessage(Component.text());
 
         EventManager eventManager = proxy.getEventManager();
@@ -74,25 +75,19 @@ public final class VeloCore{
         commandManager.register("find", new Find(proxy, playerOnlineSession));
 
         // SQLITE INITIATION
-        try {
-            dataBase = new DataBase(proxy, playerStaffChat, playerStaffChatMute);
-            dataBase.connect("plugins/velocore/staffdata.db");
-            dataBase.createTables();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        dataBase = new DataBase(proxy, playerStaffChat, playerStaffChatMute);
+        dataBase.loadTables();
         dataBase.loadStaffData();
 
         // DISCORD INITIATION
-        discordConnection = new DiscordConnection(this);
+        discordConnection = new DiscordConnection(proxy);
         staffChannel = new StaffChannel(proxy, playerStaffChat, playerStaffChatMute, discordConnection);
         discordChannel = new DiscordChannel(this, staffChannel, discordConnection);
         discordConnection.disconnect();
         discordConnection.connect("MTE0NTMyMTMzOTUyMDAzNjkzNA.GTGhdW.yvd6PWQ1W99QZ7fevuTYn8Px-ADW8FvvrKQBug", discordChannel);
 
-
-
         eventManager.register(this, new OnlineSession(proxy, playerOnlineSession));
+        eventManager.register(this, new StaffSession(proxy, dataBase));
         eventManager.register(this, staffChannel);
         eventManager.register(this, discordChannel);
     }
@@ -101,8 +96,9 @@ public final class VeloCore{
     public void onProxyShutdown(ProxyShutdownEvent event) {
         discordConnection.disconnect();
         dataBase.saveStaffData();
+        dataBase.closeDataSource();
         proxy.getConsoleCommandSource().sendMessage(Component.text());
-        proxy.getConsoleCommandSource().sendMessage(Component.text("§cDisabling §eVeloCore!"));
+        proxy.getConsoleCommandSource().sendMessage(Component.text("§f[§eVeloCore§f] §cPlugin Unloaded!"));
         proxy.getConsoleCommandSource().sendMessage(Component.text());
     }
 }
