@@ -1,20 +1,12 @@
 package me.kenvera.velocore.listeners;
 
-import com.velocitypowered.api.event.Subscribe;
-import com.velocitypowered.api.event.connection.DisconnectEvent;
-import com.velocitypowered.api.event.player.ServerPostConnectEvent;
-import com.velocitypowered.api.permission.Tristate;
-import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
-import me.kenvera.velocore.datamanager.DataBase;
-import net.kyori.adventure.text.Component;
-
-import java.util.UUID;
+import me.kenvera.velocore.datamanager.SqlConnection;
 
 public class StaffSession {
     private final ProxyServer proxy;
-    private final DataBase dataBase;
-    public StaffSession(ProxyServer proxy, DataBase dataBase) {
+    private final SqlConnection dataBase;
+    public StaffSession(ProxyServer proxy, SqlConnection dataBase) {
         this.proxy = proxy;
         this.dataBase = dataBase;
     }
