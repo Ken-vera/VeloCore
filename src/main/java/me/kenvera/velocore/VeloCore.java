@@ -24,6 +24,7 @@ import net.kyori.adventure.text.Component;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Plugin(
         id = "velocore",
@@ -40,6 +41,7 @@ public final class VeloCore {
     private StaffChannel staffChannel;
     private DiscordConnection discordConnection;
     private DiscordChannel discordChannel;
+    private boolean pluginEnabled = false;
     @Inject
     public VeloCore(ProxyServer proxy) {
         this.proxy = proxy;
@@ -47,6 +49,7 @@ public final class VeloCore {
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
+        pluginEnabled = true;
         proxy.getConsoleCommandSource().sendMessage(Component.text());
         proxy.getConsoleCommandSource().sendMessage(Component.text("§f[§eVeloCore§f] §aPlugin Loaded!"));
         proxy.getConsoleCommandSource().sendMessage(Component.text());
@@ -89,7 +92,6 @@ public final class VeloCore {
         commandManager.register("checkalts", new AltsChecker(proxy));
         commandManager.register("find", new Find(proxy, playerOnlineSession));
 
-
         eventManager.register(this, new OnlineSession(proxy, playerOnlineSession));
         eventManager.register(this, new StaffSession(proxy, dataBase));
         eventManager.register(this, staffChannel);
@@ -100,7 +102,9 @@ public final class VeloCore {
     public void onProxyShutdown(ProxyShutdownEvent event) {
         discordConnection.disconnect();
 
-        dataBase.saveStaffData();
+        if (pluginEnabled) {
+            dataBase.saveStaffData();
+        }
         dataBase.closeDataSource();
 
         proxy.getConsoleCommandSource().sendMessage(Component.text());

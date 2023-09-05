@@ -11,7 +11,9 @@ import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import me.kenvera.velocore.datamanager.SqlConnection;
+import net.kyori.adventure.text.Component;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -43,8 +45,6 @@ public final class DataBase {
                         })
                         .executes(ctx -> {
                             CommandSource source = ctx.getSource();
-                            Player playerSource = (Player) source;
-                            UUID uuid = playerSource.getUniqueId();
                             String subCommand = StringArgumentType.getString(ctx, "subcommand");
 
                             if (subCommand.equalsIgnoreCase("load")) {
@@ -53,6 +53,20 @@ public final class DataBase {
 
                             if (subCommand.equalsIgnoreCase("save")) {
                                 dataBase.saveStaffData();
+                            }
+
+                            if (subCommand.equalsIgnoreCase("test")) {
+                                try {
+                                    dataBase.testDb();
+                                } catch (SQLException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+
+                            if (subCommand.equalsIgnoreCase("stats")) {
+                                source.sendMessage(Component.text("Active Connections: " + dataBase.getActiveConnections()));
+                                source.sendMessage(Component.text("Idle Connections: " + dataBase.getIdleConnections()));
+                                source.sendMessage(Component.text("Total Connections: " + dataBase.getTotalConnections()));
                             }
 
                             return Command.SINGLE_SUCCESS;
