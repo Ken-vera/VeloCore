@@ -47,10 +47,6 @@ public final class VeloCore {
     private RedisConnection redis;
 //    private final ConcurrentHashMap<UUID, Long> playerOnlineSession1 = new ConcurrentHashMap<>();
 
-
-
-
-
     @Inject
     public VeloCore(ProxyServer proxy) {
         this.proxy = proxy;
@@ -67,7 +63,11 @@ public final class VeloCore {
         dataBase = new SqlConnection(proxy, playerStaffChat, playerStaffChatMute);
         dataBase.loadTables();
         dataBase.loadStaffData();
-        redis = new RedisConnection(proxy);
+
+        String redisHost = "100.126.17.140";
+        int redisPort = 6379;
+        String redisPassword = "51535968db86376b607c8a947149ce51376189ab09f63656f17b938a6db335f5";
+        redis = new RedisConnection(proxy, redisHost, redisPort, redisPassword);
 
         // DISCORD INITIATION
         discordConnection = new DiscordConnection(proxy);
@@ -100,6 +100,7 @@ public final class VeloCore {
         commandManager.register("globallist", new GlobalList(proxy), "glist");
         commandManager.register("report", new ReportListener(proxy));
         commandManager.register("checkalts", new AltsChecker(proxy));
+        commandManager.register("globalchat", new GlobalChat(proxy, redis), "gc");
         commandManager.register("find", new Find(proxy, playerOnlineSession));
 
         eventManager.register(this, new OnlineSession(proxy, playerOnlineSession));
