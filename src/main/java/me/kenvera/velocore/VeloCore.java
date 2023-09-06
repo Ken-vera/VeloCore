@@ -11,8 +11,8 @@ import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
-import com.velocitypowered.api.scheduler.ScheduledTask;
 import me.kenvera.velocore.commands.*;
+import me.kenvera.velocore.datamanager.RedisConnection;
 import me.kenvera.velocore.datamanager.SqlConnection;
 import me.kenvera.velocore.discordshake.DiscordConnection;
 import me.kenvera.velocore.listeners.DiscordChannel;
@@ -24,7 +24,7 @@ import net.kyori.adventure.text.Component;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Plugin(
         id = "velocore",
@@ -42,6 +42,15 @@ public final class VeloCore {
     private DiscordConnection discordConnection;
     private DiscordChannel discordChannel;
     private boolean pluginEnabled = false;
+
+    // FIXED
+    private RedisConnection redis;
+//    private final ConcurrentHashMap<UUID, Long> playerOnlineSession1 = new ConcurrentHashMap<>();
+
+
+
+
+
     @Inject
     public VeloCore(ProxyServer proxy) {
         this.proxy = proxy;
@@ -58,6 +67,7 @@ public final class VeloCore {
         dataBase = new SqlConnection(proxy, playerStaffChat, playerStaffChatMute);
         dataBase.loadTables();
         dataBase.loadStaffData();
+        redis = new RedisConnection(proxy);
 
         // DISCORD INITIATION
         discordConnection = new DiscordConnection(proxy);
