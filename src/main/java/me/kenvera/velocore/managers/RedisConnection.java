@@ -1,4 +1,4 @@
-package me.kenvera.velocore.datamanager;
+package me.kenvera.velocore.managers;
 
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -69,6 +69,7 @@ public class RedisConnection {
     {
         return jedispool;
     }
+
     public void shakeIncomingMessage(String message){
         executorService.execute(() -> {
             if (message.startsWith("globalmessage:")){
@@ -76,6 +77,7 @@ public class RedisConnection {
             }
         });
     }
+
     public void receiveGlobalChat(String message) {
         message = message.replace("globalmessage:", "");
         String[] split = message.split(">");

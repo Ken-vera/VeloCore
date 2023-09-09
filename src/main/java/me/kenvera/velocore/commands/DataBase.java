@@ -8,14 +8,12 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
-import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
-import me.kenvera.velocore.datamanager.SqlConnection;
+import me.kenvera.velocore.managers.SqlConnection;
 import net.kyori.adventure.text.Component;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.UUID;
 
 public final class DataBase {
     public static BrigadierCommand createBrigadierCommand(final ProxyServer proxy, SqlConnection dataBase) {

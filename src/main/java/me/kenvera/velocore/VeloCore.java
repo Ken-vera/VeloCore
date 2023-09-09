@@ -9,22 +9,26 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
+import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import me.kenvera.velocore.commands.*;
-import me.kenvera.velocore.datamanager.RedisConnection;
-import me.kenvera.velocore.datamanager.SqlConnection;
 import me.kenvera.velocore.discordshake.DiscordConnection;
 import me.kenvera.velocore.listeners.DiscordChannel;
 import me.kenvera.velocore.listeners.OnlineSession;
 import me.kenvera.velocore.listeners.StaffChannel;
 import me.kenvera.velocore.listeners.StaffSession;
+import me.kenvera.velocore.managers.DataManager;
+import me.kenvera.velocore.managers.RedisConnection;
+import me.kenvera.velocore.managers.SqlConnection;
 import net.kyori.adventure.text.Component;
+import org.slf4j.Logger;
 
+import java.io.File;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Plugin(
         id = "velocore",
@@ -44,16 +48,31 @@ public final class VeloCore {
     private boolean pluginEnabled = false;
 
     // FIXED
+    public static VeloCore INSTANCE;
+    private final File dataDirectory;
+    private final Logger logger;
+    private DataManager configManager;
     private RedisConnection redis;
 //    private final ConcurrentHashMap<UUID, Long> playerOnlineSession1 = new ConcurrentHashMap<>();
 
     @Inject
-    public VeloCore(ProxyServer proxy) {
+    public VeloCore(ProxyServer proxy, Logger logger, @DataDirectory final Path dataDirectory) {
         this.proxy = proxy;
+        this.logger = logger;
+        this.dataDirectory = dataDirectory.toFile();
+        this.configManager = new DataManager(proxy);
+    }
+
+    public static VeloCore getINSTANCE() {
+        return INSTANCE;
     }
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
+        logger.info("§f[§eVeloCore§f] §aPlugin is Loading...");
+        logger.info("§f[§eVeloCore§f] §aLoading Config...");
+        configManager.load();
+
         pluginEnabled = true;
         proxy.getConsoleCommandSource().sendMessage(Component.text());
         proxy.getConsoleCommandSource().sendMessage(Component.text("§f[§eVeloCore§f] §aPlugin Loaded!"));
@@ -64,9 +83,12 @@ public final class VeloCore {
         dataBase.loadTables();
         dataBase.loadStaffData();
 
-        String redisHost = "100.126.17.140";
-        int redisPort = 6379;
-        String redisPassword = "51535968db86376b607c8a947149ce51376189ab09f63656f17b938a6db335f5";
+        String redisHost = configManager.getString("redis.host", null);
+        proxy.getConsoleCommandSource().sendMessage(Component.text(configManager.getString("redis.host", null)));
+        int redisPort = configManager.getInt("redis.port", 0000);
+        proxy.getConsoleCommandSource().sendMessage(Component.text(configManager.getInt("redis.port", 0000)));
+        String redisPassword = configManager.getString("redis.password", null);
+        proxy.getConsoleCommandSource().sendMessage(Component.text(configManager.getString("redis.password", null)));
         redis = new RedisConnection(proxy, redisHost, redisPort, redisPassword);
 
         // DISCORD INITIATION
@@ -122,5 +144,9 @@ public final class VeloCore {
         proxy.getConsoleCommandSource().sendMessage(Component.text("§f[§eVeloCore§f] §cPlugin Unloaded!"));
         proxy.getConsoleCommandSource().sendMessage(Component.text());
 
+    }
+
+    public Logger getLogger() {
+        return logger;
     }
 }

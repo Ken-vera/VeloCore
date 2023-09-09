@@ -4,7 +4,7 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
-import me.kenvera.velocore.datamanager.RedisConnection;
+import me.kenvera.velocore.managers.RedisConnection;
 import net.kyori.adventure.text.Component;
 
 public class GlobalChat implements SimpleCommand {

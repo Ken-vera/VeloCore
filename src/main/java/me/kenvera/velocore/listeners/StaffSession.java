@@ -1,7 +1,7 @@
 package me.kenvera.velocore.listeners;
 
 import com.velocitypowered.api.proxy.ProxyServer;
-import me.kenvera.velocore.datamanager.SqlConnection;
+import me.kenvera.velocore.managers.SqlConnection;
 
 public class StaffSession {
     private final ProxyServer proxy;

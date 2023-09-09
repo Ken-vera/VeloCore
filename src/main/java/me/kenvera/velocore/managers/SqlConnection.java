@@ -1,4 +1,4 @@
-package me.kenvera.velocore.datamanager;
+package me.kenvera.velocore.managers;
 
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.zaxxer.hikari.HikariConfig;
@@ -129,11 +129,12 @@ public class SqlConnection {
                                 "ON DUPLICATE KEY UPDATE staff_channel = VALUES(staff_channel), staff_muted = VALUES(staff_muted)")) {
                 for (Map.Entry<UUID, Boolean> entry : playerStaffChat.entrySet()) {
                     UUID uuid = entry.getKey();
+                    String playerName = proxy.getPlayer(uuid).get().getGameProfile().getName();
                     boolean staffChat = entry.getValue();
                     boolean staffChatMute = playerStaffChatMute.getOrDefault(uuid, false);
 
                     statement.setString(1, uuid.toString());
-                    statement.setString(2, "Kenvera");
+                    statement.setString(2, playerName);
                     statement.setBoolean(3, staffChat);
                     statement.setBoolean(4, staffChatMute);
 
