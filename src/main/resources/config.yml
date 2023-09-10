@@ -9,3 +9,13 @@ redis:
   port: 6379
   user: "root"
   password: "root"
+
+global-chat:
+  enabled: true
+  cooldown:
+  cooldown-discount:
+    vip:
+    mvp:
+
+staff-chat:
+  prefix: "§7[§cStaffChat§7]"

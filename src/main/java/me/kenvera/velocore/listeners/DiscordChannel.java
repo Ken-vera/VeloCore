@@ -8,13 +8,29 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 public class DiscordChannel extends ListenerAdapter {
     private final VeloCore plugin;
-    private final StaffChannel staffChannel;
-    private final DiscordConnection discordConnection;
+    private StaffChannel staffChannel;
+    private DiscordConnection discordConnection;
 
-    public DiscordChannel(VeloCore plugin, StaffChannel staffChannel, DiscordConnection discordConnection) {
+    // Constructor using method chaining for concise initialization
+    public static DiscordChannel create(VeloCore plugin) {
+        return new DiscordChannel(plugin);
+    }
+
+    private DiscordChannel(VeloCore plugin) {
         this.plugin = plugin;
+        this.staffChannel = null; // Initialize to your default value or set via a method
+        this.discordConnection = null; // Initialize to your default value or set via a method
+    }
+
+    // Optional setters for StaffChannel and DiscordConnection
+    public DiscordChannel withStaffChannel(StaffChannel staffChannel) {
         this.staffChannel = staffChannel;
+        return this;
+    }
+
+    public DiscordChannel withDiscordConnection(DiscordConnection discordConnection) {
         this.discordConnection = discordConnection;
+        return this;
     }
 
     @Override

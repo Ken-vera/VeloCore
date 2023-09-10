@@ -1,6 +1,6 @@
 package me.kenvera.velocore.managers;
 
-import com.velocitypowered.api.proxy.ProxyServer;
+import me.kenvera.velocore.VeloCore;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
@@ -12,53 +12,60 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class DataManager {
-    private ProxyServer proxy;
     private ConfigurationLoader<?> loader;
     private ConfigurationNode rootNode;
-    public DataManager(ProxyServer proxy) {
-        this.proxy = proxy;
+    private VeloCore plugin;
+    public DataManager(VeloCore plugin) {
+        this.plugin = plugin;
+        this.load();
     }
 
     public void load() {
-        // Assuming you have a 'config.yml' file in your plugin's data folder
         Path configPath = Paths.get("plugins/velocore/config.yml");
         File configFile = configPath.toFile();
 
-        // Check if the config file doesn't exist, and create it from a resource
         if (!configFile.exists()) {
-            System.out.println("Config.yml is not found!");
-            System.out.println("Generating one...");
+            plugin.getLogger().error("Config.yml is not found!");
+            plugin.getLogger().warn("Generating one...");
             createConfigFromResource(configPath, "/config.yml");
         }
 
-        // Create the loader
         loader = YAMLConfigurationLoader.builder().setPath(configPath).build();
 
         try {
-            // Load the configuration file
             rootNode = loader.load();
-            System.out.println("Configuration Loaded!");
+            plugin.getLogger().info("Configuration Loaded!");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-
-
-    public String getString(String key, String defaultValue) {
-        return rootNode.getNode(key).getString(defaultValue);
+    public ConfigurationNode getKey(String key) {
+        return rootNode.getNode(key);
     }
 
-    public boolean getBoolean(String key, boolean defaultValue) {
-        return rootNode.getNode(key).getBoolean(defaultValue);
+    public String getString(String key, String defaultValue) {
+        Object value = rootNode.getNode((Object[]) key.split("\\.")).getValue();
+        if (value instanceof String) {
+            return (String) value;
+        }
+        return defaultValue;
     }
 
     public int getInt(String key, int defaultValue) {
-        return rootNode.getNode(key).getInt(defaultValue);
+        Object value = rootNode.getNode((Object[]) key.split("\\.")).getValue();
+        if (value instanceof Integer) {
+            return (int) value;
+        }
+        return defaultValue;
     }
 
-    public ConfigurationNode getKey(String key) {
-        return rootNode.getNode(key);
+    public boolean getBoolean(String key, boolean defaultValue) {
+        Object value = rootNode.getNode((Object[]) key.split("\\.")).getValue();
+        if (value instanceof Boolean) {
+            return (boolean) value;
+        }
+        return defaultValue;
     }
 
     private void createConfigFromResource(Path configPath, String resourcePath) {
@@ -67,9 +74,8 @@ public class DataManager {
                 File configFile = configPath.toFile();
                 configFile.getParentFile().mkdirs();
 
-                // Copy the resource to the config file
                 java.nio.file.Files.copy(resourceStream, configPath);
-                System.out.println("Config created!");
+                plugin.getLogger().info("Generated new config file!");
             }
         } catch (IOException e) {
             e.printStackTrace();

@@ -5,6 +5,7 @@ import com.velocitypowered.api.event.player.PlayerChatEvent;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import me.kenvera.velocore.VeloCore;
 import me.kenvera.velocore.discordshake.DiscordConnection;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
@@ -15,22 +16,19 @@ import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.cacheddata.CachedMetaData;
 import net.luckperms.api.model.user.User;
 
-import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
 public class StaffChannel {
     private final ProxyServer proxy;
-    private final Map<UUID, Boolean> playerStaffChat;
-    private final Map<UUID, Boolean> playerStaffChatMute;
     private final LuckPerms luckPerms;
     private final DiscordConnection discordConnection;
-    public StaffChannel(ProxyServer proxy, Map<UUID, Boolean> playerStaffChat, Map<UUID, Boolean> playerStaffChatMute, DiscordConnection discordConnection) {
-        this.proxy = proxy;
-        this.playerStaffChat = playerStaffChat;
-        this.playerStaffChatMute = playerStaffChatMute;
+    private final VeloCore plugin;
+    public StaffChannel(VeloCore plugin) {
+        this.plugin = plugin;
+        this.proxy = plugin.getProxy();
         this.luckPerms = LuckPermsProvider.get();
-        this.discordConnection = discordConnection;
+        this.discordConnection = plugin.getDiscordConnection();
     }
 
     @Subscribe
@@ -45,8 +43,10 @@ public class StaffChannel {
             assert user != null;
             CachedMetaData metaData = user.getCachedData().getMetaData();
             String prefix = Objects.requireNonNull(metaData.getPrefix()).replaceAll("&", "§");
-            boolean currentStatus = playerStaffChat.getOrDefault(uuid, false);
-            boolean muteStatus = playerStaffChatMute.getOrDefault(uuid, false);
+            boolean currentStatus = plugin.getPlayerStaffChat().getOrDefault(uuid, false);
+            plugin.getLogger().info(String.valueOf(currentStatus));
+            boolean muteStatus = plugin.getPlayerStaffChatMute().getOrDefault(uuid, false);
+            plugin.getLogger().info(String.valueOf(muteStatus));
 
             if (currentStatus) {
                 for (Player player : proxy.getAllPlayers()) {
