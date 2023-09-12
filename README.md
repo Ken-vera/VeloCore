@@ -8,6 +8,7 @@ Phoenix Velocity Core is an  utility plugin for [Velocity](https://papermc.io/so
 ```bash
 clone repository
 compile and build using Java 17
+put VeloCore.jar to /plugins/ on Your Velocity Server File Manager
 ```
 
 ## Usage
