@@ -1,25 +1,20 @@
 package me.kenvera.velocore.managers;
 
-import com.velocitypowered.api.proxy.ProxyServer;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import net.kyori.adventure.text.Component;
+import me.kenvera.velocore.VeloCore;
 
 import java.sql.*;
 import java.util.Map;
 import java.util.UUID;
 
 public class SqlConnection {
-    private final ProxyServer proxy;
-    private final Map<UUID, Boolean> playerStaffChat;
-    private final Map<UUID, Boolean> playerStaffChatMute;
+    private final VeloCore plugin;
     private static HikariDataSource dataSource;
-    public SqlConnection(ProxyServer proxy, Map<UUID, Boolean> playerStaffChat, Map<UUID, Boolean> playerStaffChatMute) {
-        this.proxy = proxy;
-        this.playerStaffChat = playerStaffChat;
-        this.playerStaffChatMute = playerStaffChatMute;
+    public SqlConnection(VeloCore plugin) {
+        this.plugin = plugin;
 
-        proxy.getConsoleCommandSource().sendMessage(Component.text("§f[§eVeloCore§f] §eConnection Pool Initiating!"));
+        plugin.getLogger().warn(plugin.getPrefix() + "§eConnection Pool Initiating!");
         HikariConfig config = new HikariConfig();
         config.setUsername("global-oska");
         config.setPassword("44213a6fa5b7d019f387478d6db19a6e70e27d5f2215928d1da52c1371fa93a9");
@@ -33,9 +28,9 @@ public class SqlConnection {
         try {
             Connection connection = dataSource.getConnection();
             closeConnection(connection);
-            proxy.getConsoleCommandSource().sendMessage(Component.text("§f[§eVeloCore§f] §9Connection Pool Established!"));
+            plugin.getLogger().info(plugin.getPrefix() + "§9Connection Pool Established!");
         } catch (SQLException e) {
-            proxy.getConsoleCommandSource().sendMessage(Component.text("§f[§eVeloCore§f] §cConnection Pool Initiation Failed!"));
+            plugin.getLogger().error(plugin.getPrefix() + "§cConnection Pool Initiation Failed!" + e);
             e.printStackTrace();
         }
     }
@@ -55,7 +50,7 @@ public class SqlConnection {
     public void closeDataSource() {
         if (dataSource != null) {
             dataSource.close();
-            proxy.getConsoleCommandSource().sendMessage(Component.text("§f[§eVeloCore§f] §cConnection Pool Closed!"));
+            plugin.getLogger().info(plugin.getPrefix() + "§cConnection Pool Closed!");
         }
     }
 
@@ -73,9 +68,9 @@ public class SqlConnection {
         try (Connection connection = getConnection();
              Statement statement = connection.createStatement()) {
              statement.execute(sql);
-            proxy.getConsoleCommandSource().sendMessage(Component.text("§f[§eVeloCore§f] §9Loaded Table " + "'player_data'"));
+            plugin.getLogger().info(plugin.getPrefix() + "§9Loaded Table " + "'player_data'");
         } catch (SQLException e) {
-            proxy.getConsoleCommandSource().sendMessage(Component.text("§f[§eVeloCore§f] §9Database Generation Failed!"));
+            plugin.getLogger().error(plugin.getPrefix() + "§9Database Generation Failed!" + e);
             e.printStackTrace();
         }
     }
@@ -91,15 +86,15 @@ public class SqlConnection {
                 UUID uuid = UUID.fromString(resultSet.getString("uuid"));
                 boolean staffChat = resultSet.getBoolean("staff_channel");
                 boolean staffChatMute = resultSet.getBoolean("staff_muted");
-                playerStaffChat.put(uuid, staffChat);
-                playerStaffChatMute.put(uuid, staffChatMute);
+                plugin.getPlayerStaffChat().put(uuid, staffChat);
+                plugin.getPlayerStaffChatMute().put(uuid, staffChatMute);
             }
         }
 
     }
 
     public void loadStaffData() {
-        proxy.getConsoleCommandSource().sendMessage(Component.text("§f[§eVeloCore§f] §eLoading Staff Data..."));
+        plugin.getLogger().warn(plugin.getPrefix() + "§eLoading Staff Data...");
         try (Connection connection = getConnection();
              PreparedStatement statement = connection.prepareStatement("SELECT uuid, staff_channel, staff_muted FROM staff_data");
              ResultSet resultSet = statement.executeQuery()) {
@@ -108,30 +103,30 @@ public class SqlConnection {
                 UUID uuid = UUID.fromString(resultSet.getString("uuid"));
                 boolean staffChat = resultSet.getBoolean("staff_channel");
                 boolean staffChatMute = resultSet.getBoolean("staff_muted");
-                playerStaffChat.put(uuid, staffChat);
-                playerStaffChatMute.put(uuid, staffChatMute);
+                plugin.getPlayerStaffChat().put(uuid, staffChat);
+                plugin.getPlayerStaffChatMute().put(uuid, staffChatMute);
             }
-            proxy.getConsoleCommandSource().sendMessage(Component.text("§f[§eVeloCore§f] §9Table Loaded Successfuly!"));
+            plugin.getLogger().info(plugin.getPrefix() + "§9Table Loaded Successfuly!");
         } catch (SQLException e) {
-            proxy.getConsoleCommandSource().sendMessage(Component.text("§f[§eVeloCore§f] §eError when loading Staff Data!"));
+            plugin.getLogger().error(plugin.getPrefix() + "§eError when loading Staff Data!" + e);
             e.printStackTrace();
         }
     }
 
     public void saveStaffData() {
-        proxy.getConsoleCommandSource().sendMessage(Component.text("§f[§eVeloCore§f] §eInserting Data into Table!"));
+        plugin.getLogger().warn(plugin.getPrefix() + "§eInserting Data into Table!");
 
-        if (!playerStaffChat.isEmpty()) {
+        if (!plugin.getPlayerStaffChat().isEmpty()) {
             try (Connection connection = getConnection();
                 PreparedStatement statement = connection.prepareStatement(
                         "INSERT INTO phoenix.staff_data (uuid, player_name, staff_channel, staff_muted) " +
                                 "VALUES (?, ?, ?, ?) " +
                                 "ON DUPLICATE KEY UPDATE staff_channel = VALUES(staff_channel), staff_muted = VALUES(staff_muted)")) {
-                for (Map.Entry<UUID, Boolean> entry : playerStaffChat.entrySet()) {
+                for (Map.Entry<UUID, Boolean> entry : plugin.getPlayerStaffChat().entrySet()) {
                     UUID uuid = entry.getKey();
-                    String playerName = proxy.getPlayer(uuid).get().getGameProfile().getName();
+                    String playerName = plugin.getProxy().getPlayer(uuid).get().getGameProfile().getName();
                     boolean staffChat = entry.getValue();
-                    boolean staffChatMute = playerStaffChatMute.getOrDefault(uuid, false);
+                    boolean staffChatMute = plugin.getPlayerStaffChatMute().getOrDefault(uuid, false);
 
                     statement.setString(1, uuid.toString());
                     statement.setString(2, playerName);
@@ -140,10 +135,10 @@ public class SqlConnection {
 
                     statement.executeUpdate();
 
-                    proxy.getConsoleCommandSource().sendMessage(Component.text("§f[§eVeloCore§f] §9Record Inserted Successfully!"));
+                    plugin.getLogger().info(plugin.getPrefix() + "§9Inserted Record Successfully!");
                 }
             } catch (SQLException e) {
-                proxy.getConsoleCommandSource().sendMessage(Component.text("§f[§eVeloCore§f] §can Error Occured When Inserting Record!"));
+                plugin.getLogger().error(plugin.getPrefix() + "§can Error Occured When Inserting Record!" + e);
                 e.printStackTrace();
             }
         }

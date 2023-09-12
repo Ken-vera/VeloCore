@@ -19,3 +19,7 @@ global-chat:
 
 staff-chat:
   prefix: "§7[§cStaffChat§7]"
+
+discord:
+  staff-channel-id:
+  staff-prefix:

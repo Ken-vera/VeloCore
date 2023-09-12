@@ -8,15 +8,14 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
-import com.velocitypowered.api.proxy.ProxyServer;
-import me.kenvera.velocore.managers.SqlConnection;
+import me.kenvera.velocore.VeloCore;
 import net.kyori.adventure.text.Component;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 
 public final class DataBase {
-    public static BrigadierCommand createBrigadierCommand(final ProxyServer proxy, SqlConnection dataBase) {
+    public static BrigadierCommand createBrigadierCommand(final VeloCore plugin) {
         LiteralCommandNode<CommandSource> node = LiteralArgumentBuilder
                 .<CommandSource>literal("database")
                 .requires(src -> src.getPermissionValue("velocity.staff") != Tristate.UNDEFINED)
@@ -46,25 +45,31 @@ public final class DataBase {
                             String subCommand = StringArgumentType.getString(ctx, "subcommand");
 
                             if (subCommand.equalsIgnoreCase("load")) {
-                                dataBase.loadStaffData();
+                                plugin.getSqlConnection().loadStaffData();
                             }
 
                             if (subCommand.equalsIgnoreCase("save")) {
-                                dataBase.saveStaffData();
+                                plugin.getSqlConnection().saveStaffData();
                             }
 
                             if (subCommand.equalsIgnoreCase("test")) {
                                 try {
-                                    dataBase.testDb();
+                                    plugin.getSqlConnection().testDb();
                                 } catch (SQLException e) {
                                     e.printStackTrace();
                                 }
                             }
 
                             if (subCommand.equalsIgnoreCase("stats")) {
-                                source.sendMessage(Component.text("Active Connections: " + dataBase.getActiveConnections()));
-                                source.sendMessage(Component.text("Idle Connections: " + dataBase.getIdleConnections()));
-                                source.sendMessage(Component.text("Total Connections: " + dataBase.getTotalConnections()));
+                                source.sendMessage(Component.text("Active Connections: " + plugin.getSqlConnection().getActiveConnections()));
+                                source.sendMessage(Component.text("Idle Connections: " + plugin.getSqlConnection().getIdleConnections()));
+                                source.sendMessage(Component.text("Total Connections: " + plugin.getSqlConnection().getTotalConnections()));
+                            }
+
+                            if (subCommand.equalsIgnoreCase("redis")) {
+                                source.sendMessage(Component.text("Active Connections: " + plugin.getRedisConnection().getNumActiveConnections()));
+                                source.sendMessage(Component.text("Idle Connections: " + plugin.getRedisConnection().getNumIdleConnections()));
+                                source.sendMessage(Component.text("Total Connections: " + plugin.getRedisConnection().getMaxTotalConnections()));
                             }
 
                             return Command.SINGLE_SUCCESS;

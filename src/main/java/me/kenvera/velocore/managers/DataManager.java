@@ -60,6 +60,14 @@ public class DataManager {
         return defaultValue;
     }
 
+    public Long getLong(String key) {
+        Object value = rootNode.getNode((Object[]) key.split("\\.")).getValue();
+        if (value instanceof Long) {
+            return (long) value;
+        }
+        return null;
+    }
+
     public boolean getBoolean(String key, boolean defaultValue) {
         Object value = rootNode.getNode((Object[]) key.split("\\.")).getValue();
         if (value instanceof Boolean) {

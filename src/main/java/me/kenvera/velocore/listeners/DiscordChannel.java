@@ -2,41 +2,26 @@ package me.kenvera.velocore.listeners;
 
 import me.kenvera.velocore.VeloCore;
 import me.kenvera.velocore.discordshake.DiscordConnection;
+import me.kenvera.velocore.managers.DataManager;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 public class DiscordChannel extends ListenerAdapter {
-    private final VeloCore plugin;
-    private StaffChannel staffChannel;
-    private DiscordConnection discordConnection;
-
-    // Constructor using method chaining for concise initialization
-    public static DiscordChannel create(VeloCore plugin) {
-        return new DiscordChannel(plugin);
-    }
-
-    private DiscordChannel(VeloCore plugin) {
-        this.plugin = plugin;
-        this.staffChannel = null; // Initialize to your default value or set via a method
-        this.discordConnection = null; // Initialize to your default value or set via a method
-    }
-
-    // Optional setters for StaffChannel and DiscordConnection
-    public DiscordChannel withStaffChannel(StaffChannel staffChannel) {
-        this.staffChannel = staffChannel;
-        return this;
-    }
-
-    public DiscordChannel withDiscordConnection(DiscordConnection discordConnection) {
-        this.discordConnection = discordConnection;
-        return this;
+    private final StaffChannel staffChannel;
+    private final DiscordConnection discord;
+    private final DataManager config;
+    public DiscordChannel(VeloCore plugin) {
+        this.staffChannel = plugin.getStaffChannel();
+        this.discord = plugin.getDiscordConnection();
+        this.config = plugin.getConfigManager();
     }
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
-        if (!event.getAuthor().isBot()) { // Check if the sender is not a bot
-            TextChannel targetChannel = discordConnection.jda.getTextChannelById("1145334804913586216"); // Replace with your target channel ID
+        if (!event.getAuthor().isBot()) {
+            Long id = config.getLong("discord.staff-channel-id");
+            TextChannel targetChannel = discord.getTextChannel(id);
 
             if (targetChannel != null && event.getChannel().equals(targetChannel)) {
                 String author = event.getAuthor().getEffectiveName();
@@ -51,4 +36,3 @@ public class DiscordChannel extends ListenerAdapter {
         }
     }
 }
-
