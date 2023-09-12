@@ -17,6 +17,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import me.kenvera.velocore.commands.*;
 import me.kenvera.velocore.discordshake.DiscordConnection;
+import me.kenvera.velocore.donation.DonationAnnouncement;
 import me.kenvera.velocore.listeners.DiscordChannel;
 import me.kenvera.velocore.listeners.OnlineSession;
 import me.kenvera.velocore.listeners.StaffChannel;
@@ -111,6 +112,7 @@ public final class VeloCore {
         registerCommand(commandManager, "checkalts", null, new AltsChecker(proxy));
         registerCommand(commandManager, "globalchat", null, new GlobalChat(proxy, redis), "gc");
         registerCommand(commandManager, "find", null, new Find(proxy, playerOnlineSession));
+        registerCommand(commandManager, "donationannouncement", null, new DonationAnnouncement(proxy));
 
         discordConnection.disconnect();
         discordConnection.connect("MTE0NTMyMTMzOTUyMDAzNjkzNA.GTGhdW.yvd6PWQ1W99QZ7fevuTYn8Px-ADW8FvvrKQBug", discordChannel);

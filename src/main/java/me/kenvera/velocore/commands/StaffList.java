@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 public final class StaffList {
     public static BrigadierCommand createBrigadierCommand(final ProxyServer proxy, Map<UUID, Long> playerOnlineSession) {
         LiteralCommandNode<CommandSource> node = LiteralArgumentBuilder
-                .<CommandSource>literal("staffchat")
+                .<CommandSource>literal("stafflist")
                 .requires(src -> src.getPermissionValue("velocity.staff") == Tristate.TRUE)
                     .executes(ctx -> {
                         LuckPerms luckPerms = LuckPermsProvider.get();
