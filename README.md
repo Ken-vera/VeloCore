@@ -14,8 +14,8 @@ put VeloCore.jar to /plugins/ on Your Velocity Server File Manager
 ## Usage
 
 ```java
-- /send [player/all] [server] - Send Player to Another Server
-- /staffchat <sc> (Currently Disabled) - Staff Chat
+- /send [player/current/all] [server] - Send Player to Another Proxied Server
+- /staffchat <sc> [toggle/mute] (Currently Disabled) - Staff Chat
 - /stafflist <sl> - Staff List
 - /database <db> [load/save] - Databases Related
 - /globallist <glist> - Check All Player List in Server
