@@ -7,11 +7,11 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import me.kenvera.velocore.managers.RedisConnection;
 import net.kyori.adventure.text.Component;
 
-public class GlobalChat implements SimpleCommand {
+public class GlobalChatCommand implements SimpleCommand {
     private final ProxyServer proxy;
     private final RedisConnection connection;
 
-    public GlobalChat (ProxyServer proxy, RedisConnection connection){
+    public GlobalChatCommand(ProxyServer proxy, RedisConnection connection){
         this.proxy = proxy;
         this.connection = connection;
     }

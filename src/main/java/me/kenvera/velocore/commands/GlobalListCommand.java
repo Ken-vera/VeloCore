@@ -10,10 +10,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class GlobalList implements SimpleCommand {
+public class GlobalListCommand implements SimpleCommand {
     private final ProxyServer proxy;
 
-    public GlobalList(ProxyServer proxy) {
+    public GlobalListCommand(ProxyServer proxy) {
         this.proxy = proxy;
     }
     @Override

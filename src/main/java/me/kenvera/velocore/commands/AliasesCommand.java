@@ -11,11 +11,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class Aliases implements SimpleCommand {
+public class AliasesCommand implements SimpleCommand {
     private final ProxyServer proxy;
     private final String targetServerName;
 
-    public Aliases(ProxyServer proxy, String targetServerName) {
+    public AliasesCommand(ProxyServer proxy, String targetServerName) {
         this.proxy = proxy;
         this.targetServerName = targetServerName;
     }

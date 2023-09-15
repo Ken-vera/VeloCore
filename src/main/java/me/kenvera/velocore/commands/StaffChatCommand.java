@@ -8,25 +8,26 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
+import com.velocitypowered.api.proxy.Player;
 import me.kenvera.velocore.VeloCore;
 import net.kyori.adventure.text.Component;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.UUID;
 
-public final class DataBase {
+public final class StaffChatCommand {
     public static BrigadierCommand createBrigadierCommand(final VeloCore plugin) {
         LiteralCommandNode<CommandSource> node = LiteralArgumentBuilder
-                .<CommandSource>literal("database")
-                .requires(src -> src.getPermissionValue("velocity.staff") != Tristate.UNDEFINED)
+                .<CommandSource>literal("staffchat")
+                .requires(src -> src.getPermissionValue("velocity.staff") == Tristate.TRUE)
                 .then(RequiredArgumentBuilder.<CommandSource, String>argument("subcommand", StringArgumentType.word())
                         .suggests((ctx, builder) -> {
                             String inputPart = ctx.getInput().toLowerCase();
                             String[] inputParts = inputPart.split(" ");
                             java.util.List<String> suggestions = new ArrayList<>();
 
-                            suggestions.add("load");
-                            suggestions.add("save");
+                            suggestions.add("toggle");
+                            suggestions.add("mute");
 
                             for (String suggestion : suggestions) {
                                 if (inputParts.length == 2) {
@@ -42,34 +43,32 @@ public final class DataBase {
                         })
                         .executes(ctx -> {
                             CommandSource source = ctx.getSource();
+                            Player playerSource = (Player) source;
+                            UUID uuid = playerSource.getUniqueId();
                             String subCommand = StringArgumentType.getString(ctx, "subcommand");
 
-                            if (subCommand.equalsIgnoreCase("load")) {
-                                plugin.getSqlConnection().loadStaffData();
-                            }
+                            if (subCommand.equalsIgnoreCase("toggle")) {
+                                boolean currentStatus = plugin.getPlayerStaffChat().getOrDefault(uuid, false);
 
-                            if (subCommand.equalsIgnoreCase("save")) {
-                                plugin.getSqlConnection().saveStaffData();
-                            }
-
-                            if (subCommand.equalsIgnoreCase("test")) {
-                                try {
-                                    plugin.getSqlConnection().testDb();
-                                } catch (SQLException e) {
-                                    e.printStackTrace();
+                                if (!currentStatus) {
+                                    plugin.getPlayerStaffChat().put(uuid, true);
+                                    playerSource.sendMessage(Component.text("§7[§cStaffChat§7] §aStaff Chat is Enabled!"));
+                                } else {
+                                    plugin.getPlayerStaffChat().put(uuid, false);
+                                    playerSource.sendMessage(Component.text("§7[§cStaffChat§7] §cStaff Chat is Disabled!"));
                                 }
                             }
 
-                            if (subCommand.equalsIgnoreCase("stats")) {
-                                source.sendMessage(Component.text("Active Connections: " + plugin.getSqlConnection().getActiveConnections()));
-                                source.sendMessage(Component.text("Idle Connections: " + plugin.getSqlConnection().getIdleConnections()));
-                                source.sendMessage(Component.text("Total Connections: " + plugin.getSqlConnection().getTotalConnections()));
-                            }
+                            if (subCommand.equalsIgnoreCase("mute")) {
+                                boolean currenStatus = plugin.getPlayerStaffChatMute().getOrDefault(uuid, false);
 
-                            if (subCommand.equalsIgnoreCase("redis")) {
-                                source.sendMessage(Component.text("Active Connections: " + plugin.getRedisConnection().getNumActiveConnections()));
-                                source.sendMessage(Component.text("Idle Connections: " + plugin.getRedisConnection().getNumIdleConnections()));
-                                source.sendMessage(Component.text("Total Connections: " + plugin.getRedisConnection().getMaxTotalConnections()));
+                                if (!currenStatus) {
+                                    plugin.getPlayerStaffChatMute().put(uuid, true);
+                                    playerSource.sendMessage(Component.text("§7[§cStaffChat§7] §aStaff Chat is Muted!"));
+                                } else {
+                                    plugin.getPlayerStaffChatMute().put(uuid, false);
+                                    playerSource.sendMessage(Component.text("§7[§cStaffChat§7] §aStaff Chat is Unmuted!"));
+                                }
                             }
 
                             return Command.SINGLE_SUCCESS;

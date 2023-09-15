@@ -12,10 +12,10 @@ import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.List;
 
-public class AltsChecker implements SimpleCommand {
+public class AltsCheckerCommand implements SimpleCommand {
     private final ProxyServer proxy;
 
-    public AltsChecker(ProxyServer proxy) {
+    public AltsCheckerCommand(ProxyServer proxy) {
         this.proxy = proxy;
     }
 

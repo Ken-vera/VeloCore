@@ -8,18 +8,15 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
-import com.velocitypowered.api.proxy.Player;
-import com.velocitypowered.api.proxy.ProxyServer;
+import me.kenvera.velocore.VeloCore;
 import net.kyori.adventure.text.Component;
 
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.UUID;
 
-public final class StaffChat {
-    public static BrigadierCommand createBrigadierCommand(final ProxyServer proxy, Map<UUID, Boolean> playerStaffChat, Map<UUID, Boolean> playerStaffChatMute) {
+public final class DataBaseCommand {
+    public static BrigadierCommand createBrigadierCommand(final VeloCore plugin) {
         LiteralCommandNode<CommandSource> node = LiteralArgumentBuilder
-                .<CommandSource>literal("staffchat")
+                .<CommandSource>literal("database")
                 .requires(src -> src.getPermissionValue("velocity.staff") != Tristate.UNDEFINED)
                 .then(RequiredArgumentBuilder.<CommandSource, String>argument("subcommand", StringArgumentType.word())
                         .suggests((ctx, builder) -> {
@@ -27,8 +24,8 @@ public final class StaffChat {
                             String[] inputParts = inputPart.split(" ");
                             java.util.List<String> suggestions = new ArrayList<>();
 
-                            suggestions.add("toggle");
-                            suggestions.add("mute");
+                            suggestions.add("load");
+                            suggestions.add("save");
 
                             for (String suggestion : suggestions) {
                                 if (inputParts.length == 2) {
@@ -44,32 +41,26 @@ public final class StaffChat {
                         })
                         .executes(ctx -> {
                             CommandSource source = ctx.getSource();
-                            Player playerSource = (Player) source;
-                            UUID uuid = playerSource.getUniqueId();
                             String subCommand = StringArgumentType.getString(ctx, "subcommand");
 
-                            if (subCommand.equalsIgnoreCase("toggle")) {
-                                boolean currentStatus = playerStaffChat.getOrDefault(uuid, false);
-
-                                if (!currentStatus) {
-                                    playerStaffChat.put(uuid, true);
-                                    playerSource.sendMessage(Component.text("§7[§cStaffChat§7] §aStaff Chat is Enabled!"));
-                                } else {
-                                    playerStaffChat.put(uuid, false);
-                                    playerSource.sendMessage(Component.text("§7[§cStaffChat§7] §cStaff Chat is Disabled!"));
-                                }
+                            if (subCommand.equalsIgnoreCase("load")) {
+                                plugin.getSqlConnection().loadStaffData();
                             }
 
-                            if (subCommand.equalsIgnoreCase("mute")) {
-                                boolean currenStatus = playerStaffChatMute.getOrDefault(uuid, false);
+                            if (subCommand.equalsIgnoreCase("save")) {
+                                plugin.getSqlConnection().saveStaffData();
+                            }
 
-                                if (!currenStatus) {
-                                    playerStaffChatMute.put(uuid, true);
-                                    playerSource.sendMessage(Component.text("§7[§cStaffChat§7] §aStaff Chat is Muted!"));
-                                } else {
-                                    playerStaffChatMute.put(uuid, false);
-                                    playerSource.sendMessage(Component.text("§7[§cStaffChat§7] §aStaff Chat is Unmuted!"));
-                                }
+                            if (subCommand.equalsIgnoreCase("stats")) {
+                                source.sendMessage(Component.text("Active Connections: " + plugin.getSqlConnection().getActiveConnections()));
+                                source.sendMessage(Component.text("Idle Connections: " + plugin.getSqlConnection().getIdleConnections()));
+                                source.sendMessage(Component.text("Total Connections: " + plugin.getSqlConnection().getTotalConnections()));
+                            }
+
+                            if (subCommand.equalsIgnoreCase("redis")) {
+                                source.sendMessage(Component.text("Active Connections: " + plugin.getRedisConnection().getNumActiveConnections()));
+                                source.sendMessage(Component.text("Idle Connections: " + plugin.getRedisConnection().getNumIdleConnections()));
+                                source.sendMessage(Component.text("Total Connections: " + plugin.getRedisConnection().getMaxTotalConnections()));
                             }
 
                             return Command.SINGLE_SUCCESS;

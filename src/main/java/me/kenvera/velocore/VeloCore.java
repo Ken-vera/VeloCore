@@ -19,9 +19,10 @@ import me.kenvera.velocore.commands.*;
 import me.kenvera.velocore.discordshake.DiscordConnection;
 import me.kenvera.velocore.donation.DonationAnnouncement;
 import me.kenvera.velocore.listeners.DiscordChannel;
-import me.kenvera.velocore.listeners.OnlineSession;
+import me.kenvera.velocore.listeners.PlayerSession;
 import me.kenvera.velocore.listeners.StaffChannel;
 import me.kenvera.velocore.listeners.StaffSession;
+import me.kenvera.velocore.managers.BanManager;
 import me.kenvera.velocore.managers.DataManager;
 import me.kenvera.velocore.managers.RedisConnection;
 import me.kenvera.velocore.managers.SqlConnection;
@@ -52,6 +53,7 @@ public final class VeloCore {
     private StaffChannel staffChannel;
     private DiscordConnection discordConnection;
     private DiscordChannel discordChannel;
+    private BanManager banManager;
 
     // FIXED
     private final Logger logger;
@@ -103,16 +105,17 @@ public final class VeloCore {
 
 
         // Command Register
-        registerCommand(commandManager, "send", Send.createBrigadierCommand(proxy), null);
-        registerCommand(commandManager, "staffchat", StaffChat.createBrigadierCommand(proxy, playerStaffChat, playerStaffChatMute), null, "sc");
-        registerCommand(commandManager, "stafflist", StaffList.createBrigadierCommand(proxy, playerOnlineSession), null, "sl");
-        registerCommand(commandManager, "database", DataBase.createBrigadierCommand(this), null, "db");
-        registerCommand(commandManager, "globallist", null, new GlobalList(proxy), "glist");
-        registerCommand(commandManager, "report", null, new ReportListener(proxy));
-        registerCommand(commandManager, "checkalts", null, new AltsChecker(proxy));
-        registerCommand(commandManager, "globalchat", null, new GlobalChat(proxy, redis), "gc");
-        registerCommand(commandManager, "find", null, new Find(proxy, playerOnlineSession));
+        registerCommand(commandManager, "send", SendCommand.createBrigadierCommand(this), null);
+        registerCommand(commandManager, "staffchat", StaffChatCommand.createBrigadierCommand(this), null, "sc");
+        registerCommand(commandManager, "stafflist", StaffListCommand.createBrigadierCommand(this), null, "sl");
+        registerCommand(commandManager, "database", DataBaseCommand.createBrigadierCommand(this), null, "db");
+        registerCommand(commandManager, "globallist", null, new GlobalListCommand(proxy), "glist");
+        registerCommand(commandManager, "report", ReportCommand.createBrigadierCommand(this), null);
+        registerCommand(commandManager, "checkalts", null, new AltsCheckerCommand(proxy));
+        registerCommand(commandManager, "globalchat", null, new GlobalChatCommand(proxy, redis), "gc");
+        registerCommand(commandManager, "find", FindCommand.createBrigadierCommand(this), null);
         registerCommand(commandManager, "donationannouncement", null, new DonationAnnouncement(proxy));
+        registerCommand(commandManager, "ban", BanCommand.createBrigadierCommand(this), null, "vban");
 
         discordConnection.disconnect();
         discordConnection.connect("MTE0NTMyMTMzOTUyMDAzNjkzNA.GTGhdW.yvd6PWQ1W99QZ7fevuTYn8Px-ADW8FvvrKQBug", discordChannel);
@@ -121,13 +124,15 @@ public final class VeloCore {
 
         for (RegisteredServer server : proxy.getAllServers()) {
             String serverName = server.getServerInfo().getName();
-            commandManager.register(serverName, new Aliases(proxy, serverName));
+            commandManager.register(serverName, new AliasesCommand(proxy, serverName));
         }
 
-        eventManager.register(this, new OnlineSession(this));
+        eventManager.register(this, new PlayerSession(this));
         eventManager.register(this, new StaffSession(this));
         eventManager.register(this, staffChannel);
         eventManager.register(this, discordChannel);
+
+        dataBase.loadTables();
     }
 
     @Subscribe (order = PostOrder.LATE)
@@ -159,6 +164,7 @@ public final class VeloCore {
             discordConnection = new DiscordConnection(this);
             staffChannel = new StaffChannel(this);
             discordChannel = new DiscordChannel(this);
+            banManager = new BanManager(this);
         }
     }
 
@@ -217,5 +223,9 @@ public final class VeloCore {
 
     public DataManager getConfigManager() {
         return configManager;
+    }
+
+    public BanManager getBanManager() {
+        return  banManager;
     }
 }

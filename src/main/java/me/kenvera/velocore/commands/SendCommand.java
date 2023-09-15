@@ -9,8 +9,8 @@ import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.proxy.Player;
-import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import me.kenvera.velocore.VeloCore;
 import net.kyori.adventure.text.Component;
 
 import java.util.ArrayList;
@@ -18,8 +18,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public final class Send {
-    public static BrigadierCommand createBrigadierCommand(final ProxyServer proxy) {
+public final class SendCommand {
+    public static BrigadierCommand createBrigadierCommand(final VeloCore plugin) {
         LiteralCommandNode<CommandSource> node = LiteralArgumentBuilder
                 .<CommandSource>literal("send")
                 .requires(src -> src.getPermissionValue("velocity.staff") != Tristate.UNDEFINED)
@@ -38,7 +38,7 @@ public final class Send {
                                 suggestions.add("current");
                             }
 
-                            for (Player player : proxy.getAllPlayers()) {
+                            for (Player player : plugin.getProxy().getAllPlayers()) {
                                 if (!player.equals(ctx.getSource())) {
                                     String playerName = player.getUsername();
                                     suggestions.add(playerName);
@@ -64,7 +64,7 @@ public final class Send {
 
                                     List<String> suggestions = new ArrayList<>();
 
-                                    proxy.getAllServers().forEach(server -> suggestions.add(server.getServerInfo().getName()));
+                                    plugin.getProxy().getAllServers().forEach(server -> suggestions.add(server.getServerInfo().getName()));
 
                                     for (String suggestion : suggestions) {
                                         if (inputParts.length == 3) {
@@ -86,15 +86,15 @@ public final class Send {
 
                                     if (target.equalsIgnoreCase("all")) {
                                         if (source.hasPermission("velocity.send.all")) {
-                                            Optional<RegisteredServer> targetServer = proxy.getServer(server);
+                                            Optional<RegisteredServer> targetServer = plugin.getProxy().getServer(server);
 
                                             if (targetServer.isPresent()) {
-                                                proxy.getAllPlayers().stream()
+                                                plugin.getProxy().getAllPlayers().stream()
                                                         .filter(player -> !player.equals(playerSource))
                                                         .filter(player -> !Objects.equals(player.getCurrentServer().get().getServerInfo().getName(), server))
                                                         .forEach(player -> player.createConnectionRequest(targetServer.get()).fireAndForget());
                                                 source.sendMessage(Component.text("§aSuccessfully sent " +
-                                                        proxy.getAllPlayers().stream()
+                                                        plugin.getProxy().getAllPlayers().stream()
                                                                 .filter(player -> !player.equals(playerSource))
                                                                 .filter(player -> !Objects.equals(player.getCurrentServer().get().getServerInfo().getName(), server)).toList().size() +
                                                         " Players to " + targetServer.get().getServerInfo().getName()));
@@ -106,15 +106,15 @@ public final class Send {
                                         }
                                     } else if (target.equalsIgnoreCase("current")) {
                                         if (source.hasPermission("velocity.send.current")) {
-                                            Optional<RegisteredServer> targetServer = proxy.getServer(server);
+                                            Optional<RegisteredServer> targetServer = plugin.getProxy().getServer(server);
 
                                             if (targetServer.isPresent()) {
-                                                proxy.getAllPlayers().stream()
+                                                plugin.getProxy().getAllPlayers().stream()
                                                         .filter(player -> !player.equals(playerSource))
                                                         .filter(player -> Objects.equals(player.getCurrentServer().get().getServerInfo().getName(), playerSource.getCurrentServer().get().getServerInfo().getName()))
                                                         .forEach(player -> player.createConnectionRequest(targetServer.get()).fireAndForget());
                                                 source.sendMessage(Component.text("§aSuccessfully sent " +
-                                                        proxy.getAllPlayers().stream()
+                                                        plugin.getProxy().getAllPlayers().stream()
                                                                 .filter(player -> !player.equals(playerSource))
                                                                 .filter(player -> Objects.equals(player.getCurrentServer().get().getServerInfo().getName(), playerSource.getCurrentServer().get().getServerInfo().getName())).toList().size() +
                                                         " Players to " + targetServer.get().getServerInfo().getName()));
@@ -125,10 +125,10 @@ public final class Send {
                                             source.sendMessage(Component.text("§cYou don't have permission to run this command!"));
                                         }
                                     } else {
-                                        Optional<Player> targetPlayerOptional = proxy.getPlayer(target);
+                                        Optional<Player> targetPlayerOptional = plugin.getProxy().getPlayer(target);
                                         if (targetPlayerOptional.isPresent()) {
                                             Player targetPlayer = targetPlayerOptional.get();
-                                            Optional<RegisteredServer> targetServer = proxy.getServer(server);
+                                            Optional<RegisteredServer> targetServer = plugin.getProxy().getServer(server);
                                             if (targetServer.isPresent()) {
                                                 targetPlayer.createConnectionRequest(targetServer.get()).fireAndForget();
                                                 source.sendMessage(Component.text("§aSuccesfully sent " + targetPlayer.getUsername() + " to " + targetServer.get().getServerInfo().getName()));

@@ -7,27 +7,26 @@ import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.proxy.Player;
-import com.velocitypowered.api.proxy.ProxyServer;
+import me.kenvera.velocore.VeloCore;
 import net.kyori.adventure.text.Component;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.cacheddata.CachedMetaData;
 import net.luckperms.api.model.user.User;
 
-import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-public final class StaffList {
-    public static BrigadierCommand createBrigadierCommand(final ProxyServer proxy, Map<UUID, Long> playerOnlineSession) {
+public final class StaffListCommand {
+    public static BrigadierCommand createBrigadierCommand(final VeloCore plugin) {
         LiteralCommandNode<CommandSource> node = LiteralArgumentBuilder
                 .<CommandSource>literal("stafflist")
                 .requires(src -> src.getPermissionValue("velocity.staff") == Tristate.TRUE)
                     .executes(ctx -> {
                         LuckPerms luckPerms = LuckPermsProvider.get();
                         CommandSource source = ctx.getSource();
-                        java.util.List<Player> onlineStaff = proxy.getAllPlayers().stream()
+                        java.util.List<Player> onlineStaff = plugin.getProxy().getAllPlayers().stream()
                                 .filter(player -> player.hasPermission("velocity.staff"))
                                 .toList();
 
@@ -39,7 +38,7 @@ public final class StaffList {
                         for (Player staffMember : onlineStaff) {
                             UUID uuid = staffMember.getUniqueId();
                             User user = luckPerms.getUserManager().getUser(uuid);
-                            long onlineTime = playerOnlineSession.getOrDefault(uuid, 0L);
+                            long onlineTime = plugin.getPlayerSession().getOrDefault(uuid, 0L);
                             long currentTime = System.currentTimeMillis();
 
                             long onlineSession = currentTime - onlineTime;

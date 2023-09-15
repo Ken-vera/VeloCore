@@ -11,6 +11,22 @@ import java.util.UUID;
 public class SqlConnection {
     private final VeloCore plugin;
     private static HikariDataSource dataSource;
+
+    private static final String CREATE_TABLE_PLAYER_DATA = "CREATE TABLE IF NOT EXISTS phoenix.player_data (uuid VARCHAR(36) PRIMARY KEY, player_name VARCHAR(18), staff_channel BOOLEAN, staff_muted BOOLEAN)";
+    private static final String CREATE_TABLE_BAN = "CREATE TABLE IF NOT EXISTS phoenix.ban (id INT(10) NOT NULL PRIMARY KEY AUTO_INCREMENT, uuid CHAR(50) NOT NULL, player_name CHAR(50) NOT NULL, issuer CHAR(50) NOT NULL, reason CHAR(50) NOT NULL)";
+    private static final String INSERT_BAN = "INSERT INTO ban_bans (user, until, bannedBy, reason, issuedAt) VALUES (?, ?, ?, ?, ?)";
+//    private static final String GET_BAN = "SELECT id, reason, until, bannedBy, reducedUntil, issuedAt FROM ban_bans WHERE " + BANED_CRITERIA + " and user = ? LIMIT 1";
+    private static final String GET_BAN_HISTORY = "SELECT id, reason, until, bannedBy, reducedUntil, issuedAt, purged, reducedBy  FROM ban_bans WHERE user = ?";
+    private static final String SET_USERNAME = "INSERT INTO ban_nameCache (user, username) VALUES (?, ?)";
+    private static final String UPDATE_USERNAME = "UPDATE ban_nameCache SET username=? WHERE user=?";
+    private static final String GET_USERNAME = "SELECT username FROM ban_nameCache WHERE user=? LIMIT 1";
+    private static final String GET_UUID = "SELECT user FROM ban_nameCache WHERE username=? LIMIT 1";
+//    private static final String PURGE_BANS = "UPDATE ban_bans SET purged=? WHERE " + BANED_CRITERIA + " and user = ?";
+    private static final String PURGE_BAN = "UPDATE ban_bans SET purged=? WHERE user = ? AND id=?";
+//    private static final String REDUCE_BANS = "UPDATE ban_bans SET reducedUntil=?, reducedBy=?, reducedAt=? WHERE " + BANED_CRITERIA + " AND user=?";
+    private static final String GET_USERNAMES_BASE = "SELECT username FROM ban_bans INNER JOIN ban_nameCache ON ban_bans.user = ban_nameCache.user WHERE GROUP BY username";
+//    private static final String GET_BAN_COUNT = "SELECT count(*) FROM ban_bans WHERE " + BANED_CRITERIA;
+
     public SqlConnection(VeloCore plugin) {
         this.plugin = plugin;
 
@@ -63,34 +79,15 @@ public class SqlConnection {
     }
 
     public void loadTables() {
-        String sql = "CREATE TABLE IF NOT EXISTS player_data (uuid VARCHAR(36) PRIMARY KEY, player_name VARCHAR(18), staff_channel BOOLEAN, staff_muted BOOLEAN)";
-
         try (Connection connection = getConnection();
              Statement statement = connection.createStatement()) {
-             statement.execute(sql);
+             statement.executeUpdate(CREATE_TABLE_PLAYER_DATA);
+             statement.executeUpdate(CREATE_TABLE_BAN);
             plugin.getLogger().info(plugin.getPrefix() + "§9Loaded Table " + "'player_data'");
         } catch (SQLException e) {
             plugin.getLogger().error(plugin.getPrefix() + "§9Database Generation Failed!" + e);
             e.printStackTrace();
         }
-    }
-
-    public void testDb() throws SQLException{
-        String sql = "SELECT uuid, staff_channel, staff_muted FROM player_data";
-
-        try (Connection connection = getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql);
-             ResultSet resultSet = statement.executeQuery()) {
-
-            while (resultSet.next()) {
-                UUID uuid = UUID.fromString(resultSet.getString("uuid"));
-                boolean staffChat = resultSet.getBoolean("staff_channel");
-                boolean staffChatMute = resultSet.getBoolean("staff_muted");
-                plugin.getPlayerStaffChat().put(uuid, staffChat);
-                plugin.getPlayerStaffChatMute().put(uuid, staffChatMute);
-            }
-        }
-
     }
 
     public void loadStaffData() {
