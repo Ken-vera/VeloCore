@@ -44,9 +44,7 @@ public class StaffChannel {
             CachedMetaData metaData = user.getCachedData().getMetaData();
             String prefix = Objects.requireNonNull(metaData.getPrefix()).replaceAll("&", "§");
             boolean currentStatus = plugin.getPlayerStaffChat().getOrDefault(uuid, false);
-            plugin.getLogger().info(String.valueOf(currentStatus));
             boolean muteStatus = plugin.getPlayerStaffChatMute().getOrDefault(uuid, false);
-            plugin.getLogger().info(String.valueOf(muteStatus));
 
             if (currentStatus) {
                 for (Player player : proxy.getAllPlayers()) {
@@ -77,7 +75,7 @@ public class StaffChannel {
     }
 
     public void sendDiscordChat(String sender, String message) {
-        String targetChannelId = "1145334804913586216"; // Replace with your target channel ID
+        String targetChannelId = plugin.getConfigManager().getString("discord.staff-channel-id", ""); // Replace with your target channel ID
 
         // Get the TextChannel instance using the provided channel ID
         TextChannel targetChannel = discordConnection.jda.getTextChannelById(targetChannelId);

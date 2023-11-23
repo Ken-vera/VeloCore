@@ -22,10 +22,9 @@ import me.kenvera.velocore.listeners.DiscordChannel;
 import me.kenvera.velocore.listeners.PlayerSession;
 import me.kenvera.velocore.listeners.StaffChannel;
 import me.kenvera.velocore.listeners.StaffSession;
-import me.kenvera.velocore.managers.BanManager;
-import me.kenvera.velocore.managers.DataManager;
-import me.kenvera.velocore.managers.RedisConnection;
-import me.kenvera.velocore.managers.SqlConnection;
+import me.kenvera.velocore.managers.*;
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.LuckPermsProvider;
 import org.slf4j.Logger;
 import redis.clients.jedis.JedisPool;
 
@@ -60,6 +59,8 @@ public final class VeloCore {
     private DataManager configManager;
     private RedisConnection redis;
     private CommandManager commandManager;
+    private PlayerData playerData;
+    private Ban ban;
     private JedisPool jedisPool;
     private ExecutorService executorService;
 
@@ -116,6 +117,10 @@ public final class VeloCore {
         registerCommand(commandManager, "find", FindCommand.createBrigadierCommand(this), null);
         registerCommand(commandManager, "donationannouncement", null, new DonationAnnouncement(proxy));
         registerCommand(commandManager, "ban", BanCommand.createBrigadierCommand(this), null, "vban");
+        registerCommand(commandManager, "tempban", TempBanCommand.createBrigadierCommand(this), null, "vtempban");
+        registerCommand(commandManager, "unban", UnBanCommand.createBrigadierCommand(this), null, "vunban");
+        registerCommand(commandManager, "debug", Debug.createBrigadierCommand(this), null);
+        registerCommand(commandManager, "velocore", new ReloadCommand(this).createBrigadierCommand(), null);
 
         discordConnection.disconnect();
         discordConnection.connect("MTE0NTMyMTMzOTUyMDAzNjkzNA.GTGhdW.yvd6PWQ1W99QZ7fevuTYn8Px-ADW8FvvrKQBug", discordChannel);
@@ -135,11 +140,11 @@ public final class VeloCore {
         dataBase.loadTables();
     }
 
-    @Subscribe (order = PostOrder.LATE)
+    @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent event) {
-        redis.close();
         discordConnection.disconnect();
         dataBase.closeDataSource();
+        redis.close();
 
         logger.info("");
         logger.info(getPrefix() + "§cPlugin Unloaded!");
@@ -165,6 +170,7 @@ public final class VeloCore {
             staffChannel = new StaffChannel(this);
             discordChannel = new DiscordChannel(this);
             banManager = new BanManager(this);
+            playerData = new PlayerData(this);
         }
     }
 
@@ -227,5 +233,13 @@ public final class VeloCore {
 
     public BanManager getBanManager() {
         return  banManager;
+    }
+
+    public PlayerData getPlayerData() {
+        return playerData;
+    }
+
+    public LuckPerms getLuckPerms() {
+        return LuckPermsProvider.get();
     }
 }

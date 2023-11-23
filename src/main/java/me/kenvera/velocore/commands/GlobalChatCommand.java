@@ -7,6 +7,8 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import me.kenvera.velocore.managers.RedisConnection;
 import net.kyori.adventure.text.Component;
 
+import java.util.Arrays;
+
 public class GlobalChatCommand implements SimpleCommand {
     private final ProxyServer proxy;
     private final RedisConnection connection;
@@ -24,10 +26,14 @@ public class GlobalChatCommand implements SimpleCommand {
             source.sendMessage(Component.text("§cUsage: /globalchat <message>"));
             return;
         }
+
         if (!(source instanceof Player player)){
             return;
         }
+
+        String message = String.join(" ", args);
+
         connection.getJedis();
-        connection.publish("globalmessage:" + player.getGameProfile().getName() + " §7: §7" + args[0]);
+        connection.publish("globalmessage:" + player.getCurrentServer().get().getServerInfo().getName().toUpperCase() + ":" + player.getGameProfile().getName() + ":" + message);
     }
 }

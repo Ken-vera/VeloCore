@@ -37,7 +37,7 @@ public class SqlConnection {
         config.setConnectionTimeout(10000);
         config.setMaximumPoolSize(20); // Adjust the pool size as needed
         config.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        config.setJdbcUrl("jdbc:mysql://100.126.17.140:3306/phoenix?useSSL=false");
+        config.setJdbcUrl("jdbc:mysql://100.126.17.140:3306/phoenix?allowPublicKeyRetrieval=true&useSSL=false");
         config.setMaxLifetime(30000);
         dataSource = new HikariDataSource(config);
 

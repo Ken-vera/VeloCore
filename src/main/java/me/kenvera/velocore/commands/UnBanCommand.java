@@ -10,12 +10,11 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.proxy.Player;
 import me.kenvera.velocore.VeloCore;
+import me.kenvera.velocore.managers.Ban;
 import net.kyori.adventure.text.Component;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Optional;
-import java.util.UUID;
 
 public final class UnBanCommand {
     public static BrigadierCommand createBrigadierCommand(final VeloCore plugin) {
@@ -50,23 +49,23 @@ public final class UnBanCommand {
                         .executes(ctx -> {
                             CommandSource source = ctx.getSource();
                             Player playerSource = (Player) source;
-                            UUID uuid = playerSource.getUniqueId();
                             String playerArg = StringArgumentType.getString(ctx, "player");
-                            String reason = StringArgumentType.getString(ctx, "reason");
-
-                            Optional<Player> targetPlayer = plugin.getProxy().getPlayer(playerArg);
-                            if (targetPlayer.isPresent()) {
-                                Player player = targetPlayer.get();
-                                if (player.getPermissionValue("velocity.ban.prevent") != Tristate.TRUE) {
-                                    player.disconnect(Component.text("§cYou have been banned by " + ((Player) source).getUsername()));
-                                    try {
-                                        String UUID = plugin.getBanManager().getUUID(playerArg);
-//                                        String playerName = plugin.getBanManager().getUsername(UUID);
-//                                        plugin.getBanManager().getBan(UUID);
-                                    } catch (SQLException e) {
-                                        e.printStackTrace();
+                            try {
+                                String uuid = plugin.getBanManager().getUUID(playerArg);
+                                if (uuid != null) {
+                                    Ban ban = plugin.getBanManager().getBan(uuid);
+                                    if (ban != null) {
+                                        String playerName = ban.getUsername(plugin);
+                                        plugin.getBanManager().unBan(uuid, playerSource.getUsername(), ban.getId());
+                                        source.sendMessage(Component.text("§aSuccessfully unbanned " + playerName));
+                                    } else {
+                                        source.sendMessage(Component.text("§cYou can't unban player if they don't have an active ban!"));
                                     }
+                                } else {
+                                    source.sendMessage(Component.text("§c" + playerArg + "§cplayer data can't be found within database!"));
                                 }
+                            } catch (SQLException e) {
+                                e.printStackTrace();
                             }
 
                             return Command.SINGLE_SUCCESS;

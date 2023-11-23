@@ -12,9 +12,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class DataManager {
-    private ConfigurationLoader<?> loader;
     private ConfigurationNode rootNode;
-    private VeloCore plugin;
+    private final VeloCore plugin;
     public DataManager(VeloCore plugin) {
         this.plugin = plugin;
         this.load();
@@ -27,10 +26,10 @@ public class DataManager {
         if (!configFile.exists()) {
             plugin.getLogger().error("Config.yml is not found!");
             plugin.getLogger().warn("Generating one...");
-            createConfigFromResource(configPath, "/config.yml");
+            createConfigFromResource(configPath);
         }
 
-        loader = YAMLConfigurationLoader.builder().setPath(configPath).build();
+        ConfigurationLoader<?> loader = YAMLConfigurationLoader.builder().setPath(configPath).build();
 
         try {
             rootNode = loader.load();
@@ -76,8 +75,8 @@ public class DataManager {
         return defaultValue;
     }
 
-    private void createConfigFromResource(Path configPath, String resourcePath) {
-        try (InputStream resourceStream = DataManager.class.getResourceAsStream(resourcePath)) {
+    private void createConfigFromResource(Path configPath) {
+        try (InputStream resourceStream = DataManager.class.getResourceAsStream("/config.yml")) {
             if (resourceStream != null) {
                 File configFile = configPath.toFile();
                 configFile.getParentFile().mkdirs();

@@ -1,37 +1,77 @@
 package me.kenvera.velocore.managers;
 
+import com.velocitypowered.api.proxy.Player;
 import me.kenvera.velocore.VeloCore;
 import net.kyori.adventure.text.Component;
+import net.luckperms.api.cacheddata.CachedMetaData;
+import net.luckperms.api.model.user.User;
 
-import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.Objects;
+import java.util.UUID;
 
 public class Utils {
-    public final static SimpleDateFormat UNBAN_DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy HH:mm");
-    public static Component formatBannedMessage(String issuer, String reason, long expires, long id) {
-        String duration = "Permanent";
+    private final VeloCore plugin;
+    public Utils(VeloCore plugin) {
+        this.plugin = plugin;
+    }
+
+    public static Component formatBannedMessage(VeloCore plugin, String issuer, String reason, long expires, long id) {
+        String defaultMessage;
         if (expires != -1) {
-            duration = UNBAN_DATE_FORMAT.format(expires * 1000);
-            return Component.text("§c§lYou are temporarily banned from the server!")
-                    .appendNewline()
-                    .appendNewline()
-                    .append(Component.text("§7Reason: " + reason))
-                    .appendNewline()
-                    .append(Component.text("§7Duration: " + duration))
-                    .appendNewline()
-                    .append(Component.text("§7ID: " + id));
+            defaultMessage = "§cYou have been temporarily banned from the server!";
+            return Component.text(plugin.getConfigManager().getString("message.ban-message-duration", defaultMessage)
+                    .replace("&", "§")
+                    .replace("%reason%", reason)
+                    .replace("%expire%", parseDateTime(expires, true))
+                    .replace("%id%", String.valueOf(id)));
         } else {
-            return Component.text("§c§lYou are banned from the server!")
-                    .appendNewline()
-                    .appendNewline()
-                    .append(Component.text("§7Reason: " + reason))
-                    .appendNewline()
-                    .append(Component.text("§7Duration: " + duration))
-                    .appendNewline()
-                    .append(Component.text("§7ID: " + id));
+            defaultMessage = "§cYou have been banned from the server!";
+            return Component.text(plugin.getConfigManager().getString("message.ban-message-duration", defaultMessage)
+                    .replace("&", "§")
+                    .replace("%reason%", reason)
+                    .replace("%id%", String.valueOf(id)));
         }
     }
 
     public static Component formatBannedMessage(Ban ban, VeloCore plugin) {
-        return formatBannedMessage(ban.getUsername(plugin), ban.getReason(), ban.getExpire(), ban.getId());
+            return formatBannedMessage(plugin, ban.getUsername(plugin), ban.getReason(), ban.getExpire(), ban.getId());
+    }
+
+    public static Component formatBanMessage(VeloCore plugin){
+        String defaultMessage = "Someone has been banned!";
+            return Component.text(plugin.getConfigManager().getString("message.ban-broadcast", defaultMessage).replace("&", "§"));
+    }
+
+    public static Component formatBanBroadcast(VeloCore plugin){
+        String defaultMessage = "Someone has been banned!";
+        return Component.text(plugin.getConfigManager().getString("message.ban-broadcast", defaultMessage).replace("&", "§"));
+    }
+
+    public static boolean isInt(String str) {
+        try {
+            Integer.parseInt(str);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    public static String parseDateTime(long milliSeconds, boolean localTime) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        if (localTime) {
+            // USE THIS FOR LOCAL TIME (JAKARTA) ZONE
+            Instant instant = Instant.ofEpochMilli(milliSeconds);
+            LocalDateTime dateTime = instant.atZone(ZoneId.of("Asia/Jakarta")).toLocalDateTime();
+            return dateTime.format(formatter);
+        } else {
+            // USE THIS FOR UTC TIME ZOME
+            Instant instant = Instant.ofEpochMilli(milliSeconds);
+            LocalDateTime dateTime = instant.atZone(ZoneId.of("UTC")).toLocalDateTime();
+            return dateTime.format(formatter);
+        }
     }
 }
