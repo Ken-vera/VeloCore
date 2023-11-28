@@ -8,6 +8,7 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
+import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import me.kenvera.velocore.VeloCore;
 import me.kenvera.velocore.managers.Ban;
@@ -67,8 +68,8 @@ public final class BanCommand {
                                             if (ban != null) {
                                                 source.sendMessage(Component.text("§c" + playerArg + "§calready have an active punishment!"));
                                             } else {
-                                                player.disconnect(Component.text("§cYou have been banned by " + ((Player) source).getUsername()));
-                                                plugin.getBanManager().addBanSql(player.getUniqueId().toString(), player.getUsername(), playerSource.getUsername(), reason);
+                                                plugin.getBanManager().addBan(player.getUniqueId().toString(), player.getUsername(), playerSource.getUsername(), reason, -1);
+                                                player.disconnect(Utils.formatBannedMessage(plugin, source instanceof ConsoleCommandSource ? "Console" : (((Player) source).getUsername()), reason, -1, plugin.getBanManager().getID(player.getUniqueId().toString())));
                                             }
                                         }
                                     } else {
@@ -83,8 +84,7 @@ public final class BanCommand {
                                                 source.sendMessage(Component.text("§c" + playerName + "§chas been permanently banned on §7" + Utils.parseDateTime(bannedTime, true)));
 
                                             } else {
-                                                plugin.getBanManager().addBanRedis(uuid, playerName, playerSource.getUsername(), reason, -1);
-                                                plugin.getBanManager().addBanSql(uuid, playerName, playerSource.getUsername(), reason, -1);
+                                                plugin.getBanManager().addBan(uuid, playerName, playerSource.getUsername(), reason, -1);
                                                 source.sendMessage(Utils.formatBanMessage(plugin));
                                             }
                                         } else {

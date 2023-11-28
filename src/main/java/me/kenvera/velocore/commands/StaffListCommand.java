@@ -24,7 +24,6 @@ public final class StaffListCommand {
                 .<CommandSource>literal("stafflist")
                 .requires(src -> src.getPermissionValue("velocity.staff") == Tristate.TRUE)
                     .executes(ctx -> {
-                        LuckPerms luckPerms = LuckPermsProvider.get();
                         CommandSource source = ctx.getSource();
                         java.util.List<Player> onlineStaff = plugin.getProxy().getAllPlayers().stream()
                                 .filter(player -> player.hasPermission("velocity.staff"))
@@ -37,7 +36,7 @@ public final class StaffListCommand {
 
                         for (Player staffMember : onlineStaff) {
                             UUID uuid = staffMember.getUniqueId();
-                            User user = luckPerms.getUserManager().getUser(uuid);
+                            User user = plugin.getLuckPerms().getUserManager().getUser(uuid);
                             long onlineTime = plugin.getPlayerSession().getOrDefault(uuid, 0L);
                             long currentTime = System.currentTimeMillis();
 

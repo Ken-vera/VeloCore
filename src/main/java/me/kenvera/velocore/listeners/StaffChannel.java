@@ -20,15 +20,9 @@ import java.util.Objects;
 import java.util.UUID;
 
 public class StaffChannel {
-    private final ProxyServer proxy;
-    private final LuckPerms luckPerms;
-    private final DiscordConnection discordConnection;
     private final VeloCore plugin;
     public StaffChannel(VeloCore plugin) {
         this.plugin = plugin;
-        this.proxy = plugin.getProxy();
-        this.luckPerms = LuckPermsProvider.get();
-        this.discordConnection = plugin.getDiscordConnection();
     }
 
     @Subscribe
@@ -36,7 +30,7 @@ public class StaffChannel {
         Player sender = event.getPlayer();
         UUID uuid = sender.getUniqueId();
         String message = event.getMessage().replaceAll("&&", "§");
-        User user = luckPerms.getUserManager().getUser(uuid);
+        User user = plugin.getLuckPerms().getUserManager().getUser(uuid);
         String server = sender.getCurrentServer().get().getServerInfo().getName();
 
         if (sender.getPermissionValue("velocity.staff") == Tristate.TRUE) {
@@ -47,7 +41,7 @@ public class StaffChannel {
             boolean muteStatus = plugin.getPlayerStaffChatMute().getOrDefault(uuid, false);
 
             if (currentStatus) {
-                for (Player player : proxy.getAllPlayers()) {
+                for (Player player : plugin.getProxy().getAllPlayers()) {
                     if (player.getPermissionValue("velocity.staff") == Tristate.TRUE) {
                         if (muteStatus) {
                             event.setResult(PlayerChatEvent.ChatResult.denied());
@@ -60,14 +54,14 @@ public class StaffChannel {
                     }
                 }
                 System.out.println("§7[§cStaffChat§7] [§6" + server.toUpperCase() + "§7] " + prefix + " " + sender.getUsername() + " : §7" + message);
-                message = "[" + server + "] " + prefix.replaceAll("§.", "") + " " + sender.getUsername() + " : " + message;
+                message = plugin.getConfigManager().getString("discord.staff-channel-prefix", null).replaceAll("%server%", server) + prefix.replaceAll("§", "") + " " + sender.getUsername() + " : §7" + message;
                 sendDiscordChat(sender.getUsername(), message);
             }
         }
     }
 
     public void sendChat(String sender, String message) {
-        for (Player player : proxy.getAllPlayers()) {
+        for (Player player : plugin.getProxy().getAllPlayers()) {
             if (player.getPermissionValue("velocity.staff") == Tristate.TRUE) {
                 player.sendMessage(Component.text("§7[§cStaffChat§7] [§6Discord§7] " + sender + " : §7" + message));
             }
@@ -75,10 +69,8 @@ public class StaffChannel {
     }
 
     public void sendDiscordChat(String sender, String message) {
-        String targetChannelId = plugin.getConfigManager().getString("discord.staff-channel-id", ""); // Replace with your target channel ID
-
-        // Get the TextChannel instance using the provided channel ID
-        TextChannel targetChannel = discordConnection.jda.getTextChannelById(targetChannelId);
+        Long targetChannelId = plugin.getConfigManager().getLong("discord.staff-channel-id");
+        TextChannel targetChannel = plugin.getDiscordConnection().jda.getTextChannelById(targetChannelId);
 
         if (targetChannel != null) {
             MessageCreateData data = new MessageCreateBuilder()

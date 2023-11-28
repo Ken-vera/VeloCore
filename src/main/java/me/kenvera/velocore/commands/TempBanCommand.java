@@ -15,7 +15,6 @@ import me.kenvera.velocore.managers.Ban;
 import me.kenvera.velocore.managers.Utils;
 import net.kyori.adventure.text.Component;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Optional;
 
@@ -63,13 +62,12 @@ public final class TempBanCommand {
                                             if (targetPlayer.isPresent()) {
                                                 Player player = targetPlayer.get();
                                                 if (player.getPermissionValue("velocity.ban.prevent") != Tristate.TRUE) {
-                                                    plugin.getBanManager().addBanRedis(player.getUniqueId().toString(), player.getUsername(), playerSource.getUsername(), reason + " redis", expire);
-                                                    plugin.getBanManager().addBanSql(player.getUniqueId().toString(), player.getUsername(), playerSource.getUsername(), reason, expire);
+                                                    plugin.getBanManager().addBan(player.getUniqueId().toString(), player.getUsername(), playerSource.getUsername(), reason, expire);
                                                     player.disconnect(Utils.formatBannedMessage(plugin, source instanceof ConsoleCommandSource ? "Console" : (((Player) source).getUsername()), reason, expire, plugin.getBanManager().getID(player.getUniqueId().toString())));
                                                     source.sendMessage(Utils.formatBanMessage(plugin));
 
                                                 } else {
-                                                    source.sendMessage(Component.text("§cThis player has immuned to ban!"));
+                                                    source.sendMessage(Component.text("§cThis player is immuned to ban!"));
                                                 }
                                             } else {
                                                 String uuid = plugin.getBanManager().getUUID(playerArg);
@@ -77,14 +75,19 @@ public final class TempBanCommand {
                                                 if (uuid != null) {
                                                     Ban currentBan = plugin.getBanManager().getBan(uuid);
                                                     if (currentBan != null) {
-                                                        source.sendMessage(Component.text("§c" + playerName + "§chas been banned until §7" + Utils.parseDateTime(currentBan.getExpire(), true)));
+                                                        if (currentBan.getExpire() != -1) {
+                                                            source.sendMessage(Component.text("§c" + playerName + " §chas been temporarily banned until §7" + Utils.parseDateTime(currentBan.getExpire(), true)));
+                                                        } else {
+                                                            source.sendMessage(Component.text("§c" + playerName + " §chas been permanently banned on §7" + Utils.parseDateTime(currentBan.getBannedTime(), true)));
+                                                        }
                                                     } else {
-                                                        plugin.getBanManager().addBanRedis(uuid, playerName, playerSource.getUsername(), reason, expire);
-                                                        plugin.getBanManager().addBanSql(uuid, playerName, playerSource.getUsername(), reason, expire);
-                                                        source.sendMessage(Utils.formatBanMessage(plugin));
+                                                        plugin.getBanManager().addBan(uuid, playerName, playerSource.getUsername(), reason, expire);
+                                                        for (Player player : plugin.getProxy().getAllPlayers()) {
+                                                            player.sendMessage(Utils.formatBanBroadcast(plugin));
+                                                        }
                                                     }
                                                 } else {
-                                                    source.sendMessage(Component.text("§c" + playerArg + "§cplayer data can't be found within database!"));
+                                                    source.sendMessage(Component.text("§c" + playerArg + " §cplayer data can't be found within database!"));
                                                 }
                                             }
                                             return Command.SINGLE_SUCCESS;
@@ -95,27 +98,27 @@ public final class TempBanCommand {
 
     public static long getBanDuration(String durationString) {
         if (Utils.isInt(durationString)) {
-            return 60L * 60 * 24 * Integer.parseInt(durationString) * 1000;
+            return Integer.parseInt(durationString) * 1000L;
         } else if (durationString.endsWith("w")) {
             durationString = durationString.replace("w", "");
             if (!Utils.isInt(durationString)) return 0;
-            return 60L * 60 * 24 * 24 * Integer.parseInt(durationString) * 1000;
+            return 60L * 60L * 24L * 7L * Integer.parseInt(durationString) * 1000L;
         } else if (durationString.endsWith("d")) {
             durationString = durationString.replace("d", "");
             if (!Utils.isInt(durationString)) return 0;
-            return 60L * 60 * 24 * Integer.parseInt(durationString) * 1000;
+            return 60L * 60L * 24L * Integer.parseInt(durationString) * 1000L;
         } else if (durationString.endsWith("h")) {
             durationString = durationString.replace("h", "");
             if (!Utils.isInt(durationString)) return 0;
-            return 60L * 60 * Integer.parseInt(durationString) * 1000;
+            return 60L * 60L * Integer.parseInt(durationString) * 1000L;
         } else if (durationString.endsWith("m")) {
             durationString = durationString.replace("m", "");
             if (!Utils.isInt(durationString)) return 0;
-            return 60L * Integer.parseInt(durationString) * 1000;
+            return 60L * Integer.parseInt(durationString) * 1000L;
         } else if (durationString.endsWith("s")) {
             durationString = durationString.replace("s", "");
             if (!Utils.isInt(durationString)) return 0;
-            return Integer.parseInt(durationString) * 1000;
+            return Integer.parseInt(durationString) * 1000L;
         } else {
             return 0;
         }

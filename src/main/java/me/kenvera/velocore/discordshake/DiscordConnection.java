@@ -26,7 +26,7 @@ public class DiscordConnection {
                             GatewayIntent.DIRECT_MESSAGES,
                             GatewayIntent.DIRECT_MESSAGE_TYPING,
                             GatewayIntent.DIRECT_MESSAGE_REACTIONS,
-                            GatewayIntent.GUILD_MEMBERS) // Add GUILD_MESSAGES and other necessary intents
+                            GatewayIntent.GUILD_MEMBERS)
                     .addEventListeners(listener)
                     .build();
 

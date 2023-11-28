@@ -13,6 +13,7 @@ import me.kenvera.velocore.VeloCore;
 import net.kyori.adventure.text.Component;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public final class StaffChatCommand {
@@ -24,7 +25,7 @@ public final class StaffChatCommand {
                         .suggests((ctx, builder) -> {
                             String inputPart = ctx.getInput().toLowerCase();
                             String[] inputParts = inputPart.split(" ");
-                            java.util.List<String> suggestions = new ArrayList<>();
+                            List<String> suggestions = new ArrayList<>();
 
                             suggestions.add("toggle");
                             suggestions.add("mute");

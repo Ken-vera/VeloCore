@@ -1,4 +1,4 @@
-package me.kenvera.velocore.managers;
+package me.kenvera.velocore.database;
 
 import me.kenvera.velocore.VeloCore;
 import ninja.leaping.configurate.ConfigurationNode;

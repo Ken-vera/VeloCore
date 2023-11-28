@@ -1,26 +1,23 @@
-package me.kenvera.velocore.managers;
+package me.kenvera.velocore.database;
 
 import com.velocitypowered.api.proxy.Player;
 import me.kenvera.velocore.VeloCore;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.JedisPubSub;
 
-import java.net.URI;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class RedisConnection {
+public class RedisManager {
     private final VeloCore plugin;
     private JedisPool jedispool;
     private JedisPubSub jedisPubSub;
     private final ExecutorService executorService = Executors.newFixedThreadPool(2);
 
-    public RedisConnection(VeloCore plugin, String host, int port, String password) {
+    public RedisManager(VeloCore plugin, String host, int port, String password) {
         this.plugin = plugin;
         JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
         jedisPoolConfig.setMaxTotal(100);

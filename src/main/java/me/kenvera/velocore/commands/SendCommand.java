@@ -22,7 +22,7 @@ public final class SendCommand {
     public static BrigadierCommand createBrigadierCommand(final VeloCore plugin) {
         LiteralCommandNode<CommandSource> node = LiteralArgumentBuilder
                 .<CommandSource>literal("send")
-                .requires(src -> src.getPermissionValue("velocity.staff") != Tristate.UNDEFINED)
+                .requires(src -> src.getPermissionValue("velocity.staff") == Tristate.TRUE)
                 .then(RequiredArgumentBuilder.<CommandSource, String>argument("player", StringArgumentType.word())
                         .suggests((ctx, builder) -> {
                             String inputPart = ctx.getInput().toLowerCase();

@@ -30,7 +30,7 @@ public class Utils {
                     .replace("%id%", String.valueOf(id)));
         } else {
             defaultMessage = "§cYou have been banned from the server!";
-            return Component.text(plugin.getConfigManager().getString("message.ban-message-duration", defaultMessage)
+            return Component.text(plugin.getConfigManager().getString("message.ban-message-permanent", defaultMessage)
                     .replace("&", "§")
                     .replace("%reason%", reason)
                     .replace("%id%", String.valueOf(id)));

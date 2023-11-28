@@ -9,7 +9,6 @@ import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.proxy.Player;
-import jdk.jshell.execution.Util;
 import me.kenvera.velocore.VeloCore;
 import me.kenvera.velocore.managers.Ban;
 import me.kenvera.velocore.managers.Utils;
@@ -17,10 +16,6 @@ import net.kyori.adventure.text.Component;
 
 import java.sql.*;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.TimeZone;
 
 public final class Debug {
@@ -35,7 +30,7 @@ public final class Debug {
                             String subCommand = StringArgumentType.getString(ctx, "string");
                             if (subCommand.equalsIgnoreCase("db")) {
                                 try {
-                                    PreparedStatement statement = plugin.getSqlConnection().getConnection().prepareStatement("SELECT expire, banned_time FROM phoenix.ban WHERE player_name = ? AND purged = 0 LIMIT 1");
+                                    PreparedStatement statement = plugin.getSqlConnection().getConnection().prepareStatement("SELECT expire, banned_time FROM CNS1_cnplayerdata_1.ban WHERE player_name = ? AND purged = 0 LIMIT 1");
                                     statement.setString(1, "MnaZ");
                                     ResultSet result = statement.executeQuery();
                                     if (result.next()) {
@@ -76,7 +71,7 @@ public final class Debug {
                                 long millis = System.currentTimeMillis();
                                 long expire = millis + 100000L;
                                 try {
-                                    PreparedStatement statement = plugin.getSqlConnection().getConnection().prepareStatement("INSERT INTO phoenix.ban (uuid, player_name, issuer, reason, expire, banned_time) VALUES (?, ?, ?, ?, ?, ?)");
+                                    PreparedStatement statement = plugin.getSqlConnection().getConnection().prepareStatement("INSERT INTO CNS1_cnplayerdata_1.ban (uuid, player_name, issuer, reason, expire, banned_time) VALUES (?, ?, ?, ?, ?, ?)");
                                     statement.setString(1, "4bc0f1dc-ade2-3a8d-8a30-c77454c1c37c");
                                     statement.setString(2, "MnaZ");
                                     statement.setString(3, "Kenvera");
@@ -102,18 +97,38 @@ public final class Debug {
                                     e.printStackTrace();
                                 }
 
+                            } else if (subCommand.equalsIgnoreCase("checktable")) {
+                                String query = "SELECT table_name FROM information_schema.tables WHERE table_schema = ?";
 
-                            } else if (subCommand.equalsIgnoreCase("rset")) {
-                                long millis = System.currentTimeMillis();
-                                long expire = millis + 10000L;
-                                String uuid = "4bc0f1dc-ade2-3a8d-8a30-c77454c1c37c";
-                                plugin.getBanManager().addBanRedis(uuid, "MnaZ", "Kenvera", "tes", expire);
+                                try (Connection connection = plugin.getSqlConnection().getConnection()) {
+                                    PreparedStatement preparedStatement = connection.prepareStatement(query);
+                                    preparedStatement.setString(1, "CNS1_cnplayerdata_1");
 
-                            } else if (subCommand.equalsIgnoreCase("rget")) {
-                                long millis = System.currentTimeMillis();
+                                    try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                                        while (resultSet.next()) {
+                                            playerSource.sendMessage(Component.text(resultSet.getString("table_name")));
+                                        }
+                                    }
+                                } catch (SQLException e) {
+                                    e.printStackTrace();
+                                }
 
-                                String uuid = "4bc0f1dc-ade2-3a8d-8a30-c77454c1c37c";
-                                playerSource.sendMessage(Component.text("Expire Redis: " +  plugin.getBanManager().getBanExpire(uuid).getExpire()));
+                            } else if (subCommand.equalsIgnoreCase("getgroup")) {
+                                String query = "SELECT `group` FROM CNS1_cnplayerdata_1.player_data WHERE uuid = ?";
+                                String uuid = playerSource.getUniqueId().toString();
+
+                                try (Connection connection = plugin.getSqlConnection().getConnection()) {
+                                    PreparedStatement preparedStatement = connection.prepareStatement(query);
+                                    preparedStatement.setString(1, uuid);
+
+                                    try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                                        while (resultSet.next()) {
+                                            playerSource.sendMessage(Component.text(resultSet.getString("group")));
+                                        }
+                                    }
+                                } catch (SQLException e) {
+                                    e.printStackTrace();
+                                }
                             } else {
                                 String uuid = plugin.getBanManager().getUUID(subCommand);
                                 Ban ban = plugin.getBanManager().getBan(uuid);
@@ -125,6 +140,31 @@ public final class Debug {
 
                             return Command.SINGLE_SUCCESS;
                         })
+                        .then(RequiredArgumentBuilder.<CommandSource, String>argument("table", StringArgumentType.word())
+                                .executes(ctx -> {
+                                    CommandSource source = ctx.getSource();
+                                    Player playerSource = (Player) source;
+                                    String subCommand = StringArgumentType.getString(ctx, "string");
+                                    String tableName = StringArgumentType.getString(ctx, "table");
+
+                                    if (subCommand.equalsIgnoreCase("purgetable")) {
+                                        if (!tableName.isEmpty()) {
+                                            try (Connection connection = plugin.getSqlConnection().getConnection()) {
+                                                String dropTableSQL = "DROP TABLE IF EXISTS " + tableName;
+                                                PreparedStatement preparedStatement = connection.prepareStatement(dropTableSQL);
+                                                preparedStatement.executeUpdate();
+                                                playerSource.sendMessage(Component.text("Dropped table: " + tableName));
+
+                                            } catch (SQLException e) {
+                                                e.printStackTrace();
+                                                playerSource.sendMessage(Component.text("An error occurred while dropping tables."));
+                                            }
+                                        }
+                                    }
+                                    return Command.SINGLE_SUCCESS;
+                                })
+                        )
+
                 ).build();
         return new BrigadierCommand(node);
     }

@@ -2,11 +2,10 @@ package me.kenvera.velocore.listeners;
 
 import me.kenvera.velocore.VeloCore;
 import me.kenvera.velocore.discordshake.DiscordConnection;
-import me.kenvera.velocore.managers.DataManager;
+import me.kenvera.velocore.database.DataManager;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.utils.SplitUtil;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 

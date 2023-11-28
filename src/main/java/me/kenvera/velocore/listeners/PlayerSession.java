@@ -38,46 +38,43 @@ public class PlayerSession {
     @Subscribe
     public void onServerJoin(PostLoginEvent event) {
         Player player = event.getPlayer();
+        String playerName = player.getUsername();
         UUID uuid = player.getUniqueId();
         User user = plugin.getLuckPerms().getUserManager().getUser(uuid);
 
-        String group = plugin.getPlayerData().getGroup(uuid.toString());
-        Group assignGroup = plugin.getLuckPerms().getGroupManager().getGroup(group);
+        if (plugin.getPlayerData().isExist(uuid.toString(), playerName)) {
+            String group = plugin.getPlayerData().getGroup(uuid.toString());
+            Group assignGroup = plugin.getLuckPerms().getGroupManager().getGroup(group);
 
-        if (!plugin.getPlayerData().isOnGroup(player, group)) {
-            if (assignGroup != null) {
-                assert user != null;
-                user.data().clear(NodeType.INHERITANCE::matches);
-                user.data().add(InheritanceNode.builder(assignGroup).build());
-                plugin.getLuckPerms().getUserManager().saveUser(user);
-            }
-        }
-
-        if (player.hasPermission("velocity.staff")) {
-            for (Player staff : proxy.getAllPlayers()) {
-                if (staff.hasPermission("velocity.staff")) {
-                    staff.sendMessage(Component.text("§7" + player.getUsername() + " has joined the server"));
+            if (!plugin.getPlayerData().isOnGroup(player, group)) {
+                if (assignGroup != null) {
+                    assert user != null;
+                    user.data().clear(NodeType.INHERITANCE::matches);
+                    user.data().add(InheritanceNode.builder(assignGroup).build());
+                    plugin.getLuckPerms().getUserManager().saveUser(user);
                 }
             }
+
+            if (player.hasPermission("velocity.staff")) {
+                for (Player staff : proxy.getAllPlayers()) {
+                    if (staff.hasPermission("velocity.staff")) {
+                        staff.sendMessage(Component.text("§7" + player.getUsername() + " has joined the server"));
+                    }
+                }
+            }
+        } else {
+            plugin.getLogger().info("&b" + playerName + " &cplayer data is not found! Generating a new one...");
+            plugin.getPlayerData().savePlayerData(uuid.toString(), playerName);
         }
     }
 
     @Subscribe
     public void onPlayerLogin(LoginEvent event) {
-    //        CHECK IF THERES A RECORD FROM REDIS FIRST
-        Ban ban;
         String uuid = event.getPlayer().getUniqueId().toString();
-        ban = plugin.getBanManager().getBanExpire(uuid);
+        Ban ban = plugin.getBanManager().getBan(uuid);
 
         if (ban != null) {
             event.setResult(ResultedEvent.ComponentResult.denied(Utils.formatBannedMessage(ban, plugin)));
-        } else {
-            //        IF NULL THEN CHECK RECORD FROM MYSQL
-            ban = plugin.getBanManager().getBan(uuid);
-
-            if (ban != null) {
-                event.setResult(ResultedEvent.ComponentResult.denied(Utils.formatBannedMessage(ban, plugin)));
-            }
         }
     }
 }

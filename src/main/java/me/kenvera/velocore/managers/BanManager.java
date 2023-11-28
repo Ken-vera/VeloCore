@@ -1,31 +1,29 @@
 package me.kenvera.velocore.managers;
 
 import me.kenvera.velocore.VeloCore;
-import redis.clients.jedis.Jedis;
 
-import java.sql.*;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class BanManager {
     private final VeloCore plugin;
-    public static final String BANED_CRITERIA = "purged = 0 and ((expire > ?) or (expire = NULL))";
-    public static final String SET_TIMEZONE = "SET time_zone = '+07:00'";
-    private static final String INSERT_BAN = "INSERT INTO phoenix.ban (uuid, player_name, issuer, reason, expire, banned_time) VALUES (?, ?, ?, ?, ?, ?)";
-    private static final String GET_BAN = "SELECT id, reason, issuer, expire, banned_time FROM phoenix.ban WHERE " + BANED_CRITERIA + " and uuid = ? LIMIT 1";
-    private static final String GET_BAN_HISTORY = "SELECT id, reason, until, bannedBy, reducedUntil, issuedAt, purged, reducedBy  FROM ban_bans WHERE user = ?";
-    private static final String SET_USERNAME = "INSERT INTO ban_nameCache (user, username) VALUES (?, ?)";
-    private static final String UPDATE_USERNAME = "UPDATE ban_nameCache SET username=? WHERE user=?";
-    private static final String GET_USERNAME = "SELECT player_name FROM phoenix.player_data WHERE uuid=? LIMIT 1";
-    private static final String GET_UUID = "SELECT uuid FROM phoenix.player_data WHERE player_name=? LIMIT 1";
-    private static final String GET_ID = "SELECT id FROM phoenix.ban WHERE " + BANED_CRITERIA + " and uuid = ? LIMIT 1";
-    private static final String PURGE_BANS = "UPDATE ban_bans SET purged=? WHERE " + BANED_CRITERIA + " and user = ?";
-    private static final String PURGE_ID = "UPDATE phoenix.ban SET purged=?, purger=? WHERE uuid = ? AND id=?";
-    private static final String PURGE_PLAYER = "UPDATE phoenix.ban SET purged=? WHERE uuid = ? AND id=?";
-    private static final String REDUCE_BANS = "UPDATE ban_bans SET reducedUntil=?, reducedBy=?, reducedAt=? WHERE " + BANED_CRITERIA + " AND user=?";
-    private static final String GET_USERNAMES_BASE = "SELECT username FROM ban_bans INNER JOIN ban_nameCache ON ban_bans.user = ban_nameCache.user WHERE GROUP BY username";
-    private static final String GET_BAN_COUNT = "SELECT count(*) FROM ban_bans WHERE " + BANED_CRITERIA;
+    private static final String BANNED_CRITERIA = "purged = 0 and ((expire > ?) or (expire = -1))";
+    private static final String SET_TIMEZONE = "SET time_zone = '+07:00'";
+    private static final String INSERT_BAN = "INSERT INTO CNS1_cnplayerdata_1.ban (uuid, username, issuer, reason, expire, banned_time) VALUES (?, ?, ?, ?, ?, ?)";
+    private static final String GET_BAN = "SELECT id, reason, issuer, expire, banned_time FROM CNS1_cnplayerdata_1.ban WHERE " + BANNED_CRITERIA + " and uuid = ? LIMIT 1";
+    private static final String GET_BANNED = "SELECT DISTINCT username FROM CNS1_cnplayerdata_1.ban WHERE " + BANNED_CRITERIA;
+    private static final String GET_BAN_HISTORY = "SELECT id, reason, until, bannedBy, reducedUntil, issuedAt, purged, reducedBy  FROM ban_bans WHERE uuid = ?";
+    private static final String GET_USERNAME = "SELECT username FROM CNS1_cnplayerdata_1.player_data WHERE uuid=? LIMIT 1";
+    private static final String GET_UUID = "SELECT uuid FROM CNS1_cnplayerdata_1.player_data WHERE username=? LIMIT 1";
+    private static final String GET_ID = "SELECT id FROM CNS1_cnplayerdata_1.ban WHERE " + BANNED_CRITERIA + " and uuid = ? LIMIT 1";
+    private static final String PURGE_BANS = "UPDATE ban_bans SET purged=? WHERE " + BANNED_CRITERIA + " and user = ?";
+    private static final String UNBAN_ID = "UPDATE CNS1_cnplayerdata_1.ban SET purged = ?, purged_time = ?, purger = ? WHERE uuid = ? AND id = ?";
+    private static final String REDUCE_BANS = "UPDATE ban_bans SET reducedUntil=?, reducedBy=?, reducedAt=? WHERE " + BANNED_CRITERIA + " AND user=?";
+    private static final String GET_BAN_COUNT = "SELECT count(*) FROM ban_bans WHERE " + BANNED_CRITERIA;
 
     public BanManager(VeloCore plugin) {
         this.plugin = plugin;
@@ -35,56 +33,11 @@ public class BanManager {
             timezoneStatement.executeUpdate();
             timezoneStatement.close();
         } catch (SQLException e) {
-            // Handle any exceptions related to setting the timezone
             e.printStackTrace();
         }
     }
 
-    //    REDIS CACHE
-    public void addBanRedis(String uuid, String playerName, String issuer, String reason, long expire) {
-        try (Jedis jedis = plugin.getRedisConnection().getJedis().getResource()) {
-            String banKey = "ban:" + uuid;
-            String expireTime = String.valueOf(expire);
-
-            jedis.hset(banKey, "player_name", playerName);
-            jedis.hset(banKey, "issuer", issuer);
-            jedis.hset(banKey, "reason", reason);
-            jedis.hset(banKey, "expire", expireTime);
-            jedis.hset(banKey, "banned_time", String.valueOf(System.currentTimeMillis()));
-
-            jedis.expire(banKey, ((expire - System.currentTimeMillis()) / 1000));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public Ban getBanExpire(String uuid) {
-        try (Jedis jedis = plugin.getRedisConnection().getJedis().getResource()) {
-            String banKey = "ban:" + uuid;
-            long id = -1;
-            String issuer = jedis.hget(banKey, "issuer");
-            String reason = jedis.hget(banKey, "reason");
-            String expire = jedis.hget(banKey, "expire");
-            long expireMillis = Long.parseLong(expire);
-            long bannedTimeMillis = Long.parseLong(jedis.hget(banKey, "banned_time"));
-
-            if (expire != null ) {
-                return new Ban(
-                        id,
-                        uuid,
-                        issuer,
-                        reason,
-                        expireMillis,
-                        bannedTimeMillis);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    //    MYSQL CACHE
-    public void addBanSql(String uuid, String playerName, String issuer, String reason, long expire){
+    public void addBan(String uuid, String playerName, String issuer, String reason, long expire){
         try (Connection connection = plugin.getSqlConnection().getConnection();
             PreparedStatement statement = connection.prepareStatement(INSERT_BAN)) {
 
@@ -92,25 +45,8 @@ public class BanManager {
             statement.setString(2, playerName);
             statement.setString(3, issuer);
             statement.setString(4, reason);
-            statement.setString(5, Utils.parseDateTime(expire, true));
-            statement.setString(6, Utils.parseDateTime(System.currentTimeMillis(), true));
-
-            statement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void addBanSql(String uuid, String playerName, String issuer, String reason) {
-        try (Connection connection = plugin.getSqlConnection().getConnection();
-             PreparedStatement statement = connection.prepareStatement(INSERT_BAN)) {
-
-            statement.setString(1, uuid.toString());
-            statement.setString(2, playerName);
-            statement.setString(3, issuer);
-            statement.setString(4, reason);
-            statement.setString(5, null);
-            statement.setString(6, Utils.parseDateTime(System.currentTimeMillis(), true));
+            statement.setLong(5, expire);
+            statement.setLong(6, System.currentTimeMillis());
 
             statement.executeUpdate();
         } catch (SQLException e) {
@@ -122,17 +58,12 @@ public class BanManager {
         try (Connection connection = plugin.getSqlConnection().getConnection();
              PreparedStatement statement = connection.prepareStatement(GET_BAN)) {
 
-             statement.setString(1, Utils.parseDateTime(System.currentTimeMillis(), true));
+             statement.setLong(1, System.currentTimeMillis());
              statement.setString(2, uuid);
              ResultSet result = statement.executeQuery();
              if (result.next()) {
-                 long expireMillis;
-                 if (result.getTimestamp("expire") != null) {
-                     expireMillis = result.getTimestamp("expire").toInstant().minusMillis(25200000).toEpochMilli();
-                 } else {
-                     expireMillis = -1;
-                 }
-                 long bannedTimeMillis = result.getTimestamp("banned_time").toInstant().minusMillis(25200000).toEpochMilli();
+                 long expireMillis = result.getLong("expire");
+                 long bannedTimeMillis = result.getLong("banned_time");
 
                  return new Ban(
                         result.getLong("id"),
@@ -158,7 +89,7 @@ public class BanManager {
 
             ResultSet result = statement.executeQuery();
             if (result.next()) {
-                return result.getString("player_name");
+                return result.getString("username");
             } else {
                 return null;
             }
@@ -173,6 +104,7 @@ public class BanManager {
              PreparedStatement statement = connection.prepareStatement(GET_UUID)) {
 
             statement.setString(1, playerName);
+
             ResultSet result = statement.executeQuery();
             if (result.next()) {
                 return result.getString("uuid");
@@ -185,21 +117,26 @@ public class BanManager {
         return null;
     }
 
-    public void unBan(String uuid, String issuer, long id) throws SQLException {
-        PreparedStatement statement = plugin.getSqlConnection().getConnection().prepareStatement(PURGE_ID);
-        statement.setBoolean(1, true);
-        statement.setString(2, issuer);
-        statement.setString(3, uuid);
-        statement.setLong(4, id);
-        statement.executeUpdate();
+    public void unBan(String uuid, String issuer, long id) {
+        try (Connection connection = plugin.getSqlConnection().getConnection();
+             PreparedStatement statement = connection.prepareStatement(UNBAN_ID)) {
+
+            statement.setBoolean(1, true);
+            statement.setLong(2, System.currentTimeMillis());
+            statement.setString(3, issuer);
+            statement.setString(4, uuid);
+            statement.setLong(5, id);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public long getID(String uuid) {
         try (Connection connection = plugin.getSqlConnection().getConnection();
             PreparedStatement statement = connection.prepareStatement(GET_ID)) {
-            ZonedDateTime currentTime = ZonedDateTime.now(ZoneId.of("Asia/Bangkok"));
 
-            statement.setTimestamp(1, Timestamp.valueOf(currentTime.toLocalDateTime()));
+            statement.setLong(1, System.currentTimeMillis());
             statement.setString(2, uuid);
             ResultSet result = statement.executeQuery();
             if (result.next()) {
@@ -211,5 +148,23 @@ public class BanManager {
             e.printStackTrace();
         }
         return 0;
+    }
+
+    public List<String> getBanned() {
+        List<String> banned = new ArrayList<>();
+
+        try (Connection connection = plugin.getSqlConnection().getConnection();
+             PreparedStatement statement = connection.prepareStatement(GET_BANNED)) {
+
+            statement.setLong(1, System.currentTimeMillis());
+
+            ResultSet result = statement.executeQuery();
+            while (result.next()) {
+                banned.add(result.getString("username"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return banned;
     }
 }
