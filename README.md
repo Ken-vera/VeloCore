@@ -1,6 +1,6 @@
-# Phoenix Velocity Core
+# Velocity Core
 
-Phoenix Velocity Core is an  utility plugin for [Velocity](https://papermc.io/software/velocity)
+Crazy Network Velocity Core is a core-utility plugin for [Velocity](https://papermc.io/software/velocity)
 ## Installation
 
 
@@ -28,5 +28,5 @@ put VeloCore.jar to /plugins/ on Your Velocity Server File Manager
 
 ## Contributing
 
-Pull requests and Push requests only for Phoenix Development Team.
+Pull requests and Push requests only for Crazy Network Development Team.
 Please make sure to update and tests.
