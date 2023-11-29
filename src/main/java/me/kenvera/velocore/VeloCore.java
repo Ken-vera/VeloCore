@@ -23,10 +23,7 @@ import me.kenvera.velocore.database.RedisManager;
 import me.kenvera.velocore.database.SqlManager;
 import me.kenvera.velocore.discordshake.DiscordConnection;
 import me.kenvera.velocore.donation.DonationAnnouncement;
-import me.kenvera.velocore.listeners.DiscordChannel;
-import me.kenvera.velocore.listeners.PlayerSession;
-import me.kenvera.velocore.listeners.StaffChannel;
-import me.kenvera.velocore.listeners.StaffSession;
+import me.kenvera.velocore.listeners.*;
 import me.kenvera.velocore.managers.*;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
@@ -116,6 +113,7 @@ public final class VeloCore {
         eventManager.register(this, new StaffSession(this));
         eventManager.register(this, staffChannel);
         eventManager.register(this, discordChannel);
+        eventManager.register(this, new ChatListener(this));
 
         dataBase.loadTables();
     }

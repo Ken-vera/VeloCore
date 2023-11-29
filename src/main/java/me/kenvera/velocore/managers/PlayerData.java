@@ -18,6 +18,7 @@ import java.util.List;
 
 public class PlayerData {
     private final VeloCore plugin;
+    private static final String MUTED_CRITERIA = "muted > ?";
     private static final String GET_GROUP = "SELECT `group` FROM CNS1_cnplayerdata_1.player_data WHERE uuid = ? LIMIT 1";
     private static final String SET_GROUP = "INSERT INTO CNS1_cnplayerdata_1.player_data (uuid, `group`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `group` = VALUES(`group`)";
     private static final String GET_PLAYER_DATA = "SELECT COUNT(*) FROM CNS1_cnplayerdata_1.player_data WHERE uuid = ? AND username = ?";
@@ -25,7 +26,7 @@ public class PlayerData {
     private static final String GET_ID = "SELECT uuid FROM CNS1_cnplayerdata_1.player_data WHERE username = ?";
     private static final String GET_USERNAMES = "SELECT username FROM CNS1_cnplayerdata_1.player_data LIMIT 50 OFFSET 0";
     private static final String GET_USERNAMES_FILTER = "SELECT username FROM CNS1_cnplayerdata_1.player_data WHERE username COLLATE latin1_general_ci LIKE ? LIMIT 50 OFFSET 0";
-    private static final String GET_MUTE = "SELECT mute FROM CNS1_cnplayerdata_1.player_data WHERE uuid = ?";
+    private static final String GET_MUTE = "SELECT muted FROM CNS1_cnplayerdata_1.player_data WHERE " + MUTED_CRITERIA + " and uuid = ?";
     public PlayerData(VeloCore plugin) {
         this.plugin = plugin;
     }
@@ -176,7 +177,21 @@ public class PlayerData {
         return plugin.getLuckPerms().getUserManager().getUser(player.getUniqueId()).getPrimaryGroup().equalsIgnoreCase(group);
     }
 
-//    public boolean isMuted(Player player) {
-//        try (Connection connection)
-//    }
+    public Long isMuted(Player player) {
+        try (Connection connection = plugin.getSqlConnection().getConnection();
+            PreparedStatement statement = connection.prepareStatement(GET_MUTE)) {
+
+            statement.setLong(1, System.currentTimeMillis());
+            statement.setString(2, player.getUniqueId().toString());
+
+            ResultSet result = statement.executeQuery();
+            if (result.next()) {
+                Long expire = result.getLong("muted");
+                return expire;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
