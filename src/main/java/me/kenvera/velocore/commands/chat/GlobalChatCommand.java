@@ -1,4 +1,4 @@
-package me.kenvera.velocore.commands;
+package me.kenvera.velocore.commands.chat;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;

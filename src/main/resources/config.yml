@@ -19,6 +19,14 @@ global-chat:
     vip:
     mvp:
 
+donator-chat:
+  enabled: true
+  prefix: '[Donator] [%server%] %player% : %message%'
+  cooldown:
+  cooldown-discount:
+    vip:
+    mvp:
+
 staff-chat:
   prefix: '§7[§cStaffChat§7]'
 

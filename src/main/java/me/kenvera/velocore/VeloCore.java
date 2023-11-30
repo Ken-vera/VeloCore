@@ -17,7 +17,11 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import lombok.Getter;
 import me.kenvera.velocore.commands.*;
+import me.kenvera.velocore.commands.chat.DonatorChatCommand;
+import me.kenvera.velocore.commands.chat.GlobalChatCommand;
+import me.kenvera.velocore.commands.chat.StaffChatCommand;
 import me.kenvera.velocore.database.DataManager;
 import me.kenvera.velocore.database.RedisManager;
 import me.kenvera.velocore.database.SqlManager;
@@ -40,26 +44,37 @@ import java.util.concurrent.TimeUnit;
         version = "1.0",
         authors = "Kenvera, Mornov",
         dependencies = {
-                @Dependency(id="luckperms", optional = false)
+                @Dependency(id="luckperms")
         }
 )
 public final class VeloCore {
+    @Getter
     private final ProxyServer proxy;
     private final Map<UUID, Long> playerOnlineSession = new HashMap<>();
+    @Getter
     private final Map<UUID, Boolean> playerStaffChat = new HashMap<>();
+    @Getter
     private final Map<UUID, Boolean> playerStaffChatMute = new HashMap<>();
     private SqlManager dataBase;
+    @Getter
     private StaffChannel staffChannel;
+    @Getter
     private DiscordConnection discordConnection;
+    @Getter
     private DiscordChannel discordChannel;
+    @Getter
     private BanManager banManager;
 
     // FIXED
+    @Getter
     private final Logger logger;
+    @Getter
     private DataManager configManager;
     private RedisManager redis;
-    private CommandManager commandManager;
+    private final CommandManager commandManager;
+    @Getter
     private PlayerData playerData;
+    @Getter
     private Ban ban;
     private final Cache<String, Cache<UUID, Long>> cooldowns = Caffeine.newBuilder().build();
 
@@ -90,6 +105,7 @@ public final class VeloCore {
         registerCommand(commandManager, "report", ReportCommand.createBrigadierCommand(this), null);
         registerCommand(commandManager, "checkalts", null, new AltsCheckerCommand(proxy));
         registerCommand(commandManager, "globalchat", GlobalChatCommand.createBrigadierCommand(this), null, "gc");
+        registerCommand(commandManager, "donatorchat", DonatorChatCommand.createBrigadierCommand(this), null,  "dc");
         registerCommand(commandManager, "find", FindCommand.createBrigadierCommand(this), null);
         registerCommand(commandManager, "donationannouncement", null, new DonationAnnouncement(proxy));
         registerCommand(commandManager, "ban", BanCommand.createBrigadierCommand(this), null, "vban");
@@ -131,7 +147,7 @@ public final class VeloCore {
 
     private void registerComponents() {
         PluginContainer luckpermsPlugin = proxy.getPluginManager().getPlugin("luckperms").orElse(null);
-        if (luckpermsPlugin == null && luckpermsPlugin.getInstance().isEmpty()) {
+        if (luckpermsPlugin == null || luckpermsPlugin.getInstance().isEmpty()) {
             getLogger().error("LuckPerms is not loaded or enabled. VeloCore depends on LuckPerms.");
         } else {
             configManager = new DataManager(this);
@@ -186,37 +202,14 @@ public final class VeloCore {
         }
     }
 
-    public Logger getLogger() {
-        return logger;
-    }
-
     public String getPrefix() {
         return "§f[§eVeloCore§f] ";
-    }
-
-    public Map<UUID, Boolean> getPlayerStaffChat() {
-        return playerStaffChat;
-    }
-
-    public Map<UUID, Boolean> getPlayerStaffChatMute() {
-        return playerStaffChatMute;
     }
 
     public Map<UUID, Long> getPlayerSession() {
         return playerOnlineSession;
     }
 
-    public ProxyServer getProxy() {
-        return proxy;
-    }
-
-    public DiscordConnection getDiscordConnection() {
-        return discordConnection;
-    }
-
-    public DiscordChannel getDiscordChannel() {
-        return discordChannel;
-    }
 
     public SqlManager getSqlConnection() {
         return dataBase;
@@ -224,26 +217,6 @@ public final class VeloCore {
 
     public RedisManager getRedisConnection() {
         return redis;
-    }
-
-    public StaffChannel getStaffChannel() {
-        return staffChannel;
-    }
-
-    public DataManager getConfigManager() {
-        return configManager;
-    }
-
-    public BanManager getBanManager() {
-        return  banManager;
-    }
-
-    public Ban getBan() {
-        return ban;
-    }
-
-    public PlayerData getPlayerData() {
-        return playerData;
     }
 
     public LuckPerms getLuckPerms() {
