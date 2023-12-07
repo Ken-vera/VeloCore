@@ -40,3 +40,6 @@ message:
   ban-message-issuer:
   ban-message-permanent: "\n&cYou have been banned from the server!\n\n&7Reason: %reason%\n&7Duration: Permanent\n\n&7ID: %id%"
   ban-message-duration: "\n&cYou have been temporarily banned from the server!\n\n&7Reason: %reason%\n&7Ban Expired on: %expire%\n\n&7ID: %id%"
+
+aliases:
+  mix:

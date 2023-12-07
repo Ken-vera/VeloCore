@@ -18,7 +18,7 @@ import java.util.List;
 
 public class PlayerData {
     private final VeloCore plugin;
-    private static final String MUTED_CRITERIA = "muted > ?";
+    private static final String MUTED_CRITERIA = "muted > ? OR muted IS NOT NULL";
     private static final String GET_GROUP = "SELECT `group` FROM CNS1_cnplayerdata_1.player_data WHERE uuid = ? LIMIT 1";
     private static final String SET_GROUP = "INSERT INTO CNS1_cnplayerdata_1.player_data (uuid, `group`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `group` = VALUES(`group`)";
     private static final String GET_PLAYER_DATA = "SELECT COUNT(*) FROM CNS1_cnplayerdata_1.player_data WHERE uuid = ? AND username = ?";
@@ -27,6 +27,7 @@ public class PlayerData {
     private static final String GET_USERNAMES = "SELECT username FROM CNS1_cnplayerdata_1.player_data LIMIT 50 OFFSET 0";
     private static final String GET_USERNAMES_FILTER = "SELECT username FROM CNS1_cnplayerdata_1.player_data WHERE username COLLATE latin1_general_ci LIKE ? LIMIT 50 OFFSET 0";
     private static final String GET_MUTE = "SELECT muted FROM CNS1_cnplayerdata_1.player_data WHERE " + MUTED_CRITERIA + " and uuid = ?";
+    private static final String INSERT_MUTE = "INSERT INTO CNS1_cnplayerdata_1.player_data (uuid, muted) VALUES (?, ?) ON DUPLICATE KEY UPDATE muted = VALUES (muted)";
     public PlayerData(VeloCore plugin) {
         this.plugin = plugin;
     }
@@ -193,5 +194,20 @@ public class PlayerData {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public void setMuted(String uuid, Long duration) throws SQLException {
+        try (Connection connection = plugin.getSqlConnection().getConnection();
+             PreparedStatement statement = connection.prepareStatement(INSERT_MUTE)) {
+
+            statement.setString(1, uuid);
+            if (duration != null) {
+                statement.setLong(2, duration);
+            } else {
+                statement.setString(2, null);
+            }
+
+            statement.executeUpdate();
+        }
     }
 }

@@ -11,6 +11,10 @@ import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.proxy.Player;
 import me.kenvera.velocore.VeloCore;
 import net.kyori.adventure.text.Component;
+import net.luckperms.api.cacheddata.CachedMetaData;
+import net.luckperms.api.model.user.User;
+
+import java.util.Objects;
 
 public final class GlobalChatCommand {
     public static BrigadierCommand createBrigadierCommand(final VeloCore plugin) {
@@ -25,9 +29,16 @@ public final class GlobalChatCommand {
 
                             if (!message.isEmpty()) {
                                 if (plugin.getCooldown("globalchat", playerSource.getUniqueId()) == null || playerSource.hasPermission("velocity.globalchat.bypass")) {
+                                    User user = plugin.getLuckPerms().getUserManager().getUser(playerSource.getUniqueId());
+
+                                    assert user != null;
+                                    CachedMetaData metaData = user.getCachedData().getMetaData();
+                                    String prefix = Objects.requireNonNull(metaData.getPrefix()).replaceAll("&", "§");
+
                                     String server = plugin.getProxy().getPlayer(playerSource.getUsername()).flatMap(Player::getCurrentServer).get().getServerInfo().getName();
-                                    String formattedMessage = plugin.getConfigManager().getString("global-chat.prefix", null)
+                                    String formattedMessage = plugin.getConfigManager().getString("global-chat.prefix", null).replaceAll("&", "§")
                                             .replaceAll("%server%", server)
+                                            .replaceAll("%prefix%", prefix)
                                             .replaceAll("%player%", playerSource.getUsername())
                                             .replaceAll("%message%", message.replaceAll("&", "§"));
 

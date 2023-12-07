@@ -28,7 +28,10 @@ import me.kenvera.velocore.database.SqlManager;
 import me.kenvera.velocore.discordshake.DiscordConnection;
 import me.kenvera.velocore.donation.DonationAnnouncement;
 import me.kenvera.velocore.listeners.*;
-import me.kenvera.velocore.managers.*;
+import me.kenvera.velocore.managers.Ban;
+import me.kenvera.velocore.managers.BanManager;
+import me.kenvera.velocore.managers.PlayerData;
+import net.kyori.adventure.text.Component;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import org.slf4j.Logger;
@@ -70,6 +73,7 @@ public final class VeloCore {
     private final Logger logger;
     @Getter
     private DataManager configManager;
+    @Getter
     private RedisManager redis;
     private final CommandManager commandManager;
     @Getter
@@ -114,6 +118,8 @@ public final class VeloCore {
         registerCommand(commandManager, "debug", Debug.createBrigadierCommand(this), null);
         registerCommand(commandManager, "velocore", new ReloadCommand(this).createBrigadierCommand(), null);
         registerCommand(commandManager, "group", GroupCommand.createBrigadierCommand(this), null);
+        registerCommand(commandManager, "mute", MuteCommand.createBrigadierCommand(this), null);
+        registerCommand(commandManager, "unmute", UnMuteCommand.createBrigadierCommand(this), null);
 
         discordConnection.disconnect();
         discordConnection.connect(configManager.getString("discord.token", null), discordChannel);
@@ -221,5 +227,13 @@ public final class VeloCore {
 
     public LuckPerms getLuckPerms() {
         return LuckPermsProvider.get();
+    }
+
+    public void broadcast(String message) {
+        getProxy().getAllPlayers().stream().forEach(player -> player.sendMessage(Component.text(message)));
+    }
+
+    public void broadcastStaff(String message) {
+        getProxy().getAllPlayers().stream().filter(player -> player.hasPermission("velocity.staff")).forEach(player -> player.sendMessage(Component.text(message)));
     }
 }

@@ -174,6 +174,7 @@ public final class GroupCommand {
                                                         if (!playerGroup.equals(group)) {
                                                             try {
                                                                 plugin.getPlayerData().setGroup(uuid, group);
+                                                                plugin.getRedis().publish("chronosync", "set_" + uuid + "_" + group);
                                                                 playerSource.sendMessage(Component.text("§aSuccessfully set " + player + "'s §agroup to " + group));
                                                             } catch (SQLException e) {
                                                                 playerSource.sendMessage(Component.text("§cDatabase error occurred when trying to set " + player + "'s §cgroup to " + group));
