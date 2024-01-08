@@ -10,12 +10,15 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
+import dev.simplix.protocolize.api.Protocolize;
+import dev.simplix.protocolize.api.SoundCategory;
+import dev.simplix.protocolize.api.player.ProtocolizePlayer;
+import dev.simplix.protocolize.data.Sound;
 import me.kenvera.velocore.VeloCore;
 import me.kenvera.velocore.managers.Ban;
 import me.kenvera.velocore.managers.Utils;
 import net.kyori.adventure.text.Component;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Optional;
 
@@ -49,46 +52,137 @@ public final class BanCommand {
                             }
                             return builder.buildFuture();
                         })
-                        .then(RequiredArgumentBuilder.<CommandSource, String>argument("reason", StringArgumentType.string())
+                        .then(RequiredArgumentBuilder.<CommandSource, String>argument("reason", StringArgumentType.greedyString())
                                 .executes(ctx -> {
                                     CommandSource source = ctx.getSource();
-                                    Player playerSource = (Player) source;
                                     String playerArg = StringArgumentType.getString(ctx, "player");
                                     String reason = StringArgumentType.getString(ctx, "reason");
 
                                     Optional<Player> targetPlayer = plugin.getProxy().getPlayer(playerArg);
                                     if (targetPlayer.isPresent()) {
-
                                         Player player = targetPlayer.get();
 
-                                        if (player.getPermissionValue("velocity.ban.prevent") != Tristate.TRUE) {
+                                        if (source instanceof Player playerSource) {
+                                            if (player.getPermissionValue("velocity.ban.prevent") != Tristate.TRUE) {
+                                                String UUID = plugin.getBanManager().getUUID(playerArg);
+                                                Ban ban = plugin.getBanManager().getBan(UUID);
+                                                if (ban != null) {
+                                                    playerSource.sendMessage(Component.text("§7" + playerArg + " §calready have an active punishment!"));
+                                                } else {
+                                                    plugin.getBanManager().addBan(player.getUniqueId().toString(), player.getUsername(), playerSource.getUsername(), reason, -1);
+                                                    player.disconnect(Utils.formatBannedMessage(plugin, playerSource.getUsername(), reason, -1, plugin.getBanManager().getID(player.getUniqueId().toString())));
+                                                    plugin.getProxy().getAllPlayers().forEach(playerOnline -> {
+                                                        playerOnline.sendMessage(Utils.formatBanMessage(plugin));
+                                                        ProtocolizePlayer playerProtocol = Protocolize.playerProvider().player(playerOnline.getUniqueId());
+                                                        if (playerProtocol != null) {
+                                                            playerProtocol.playSound(Sound.BLOCK_ANVIL_PLACE, SoundCategory.AMBIENT, 1f, 1f);
+                                                        }
+                                                    });
+                                                    plugin.getProxy().getAllPlayers().stream().filter(player1 -> player1.hasPermission("velocity.staff")).forEach(playerOnline -> {
+                                                        playerOnline.sendMessage(Component.text("§7" + player.getUsername() + " §chas been permanently banned by §7" + playerSource.getUsername()));
+                                                        playerOnline.sendMessage(Component.text("§cReason: §7" + reason));
+                                                        playerOnline.sendMessage(Component.text(""));
+                                                    });
+                                                    plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
+                                                    plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§7" + player.getUsername() + " §chas been permanently banned by §7" + playerSource.getUsername()));
+                                                    plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§cReason: §7" + reason));
+                                                    plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
+                                                }
 
+                                            }
+
+                                        } else if (source instanceof ConsoleCommandSource) {
                                             String UUID = plugin.getBanManager().getUUID(playerArg);
                                             Ban ban = plugin.getBanManager().getBan(UUID);
                                             if (ban != null) {
-                                                source.sendMessage(Component.text("§c" + playerArg + "§calready have an active punishment!"));
+                                                source.sendMessage(Component.text("§7" + playerArg + " §calready have an active punishment!"));
                                             } else {
-                                                plugin.getBanManager().addBan(player.getUniqueId().toString(), player.getUsername(), playerSource.getUsername(), reason, -1);
-                                                player.disconnect(Utils.formatBannedMessage(plugin, source instanceof ConsoleCommandSource ? "Console" : (((Player) source).getUsername()), reason, -1, plugin.getBanManager().getID(player.getUniqueId().toString())));
+                                                plugin.getBanManager().addBan(player.getUniqueId().toString(), player.getUsername(), "Console", reason, -1);
+                                                player.disconnect(Utils.formatBannedMessage(plugin, "Console", reason, -1, plugin.getBanManager().getID(player.getUniqueId().toString())));
+                                                plugin.getProxy().getAllPlayers().forEach(playerOnline -> {
+                                                    playerOnline.sendMessage(Utils.formatBanMessage(plugin));
+                                                    ProtocolizePlayer playerProtocol = Protocolize.playerProvider().player(playerOnline.getUniqueId());
+                                                    if (playerProtocol != null) {
+                                                        playerProtocol.playSound(Sound.BLOCK_ANVIL_PLACE, SoundCategory.AMBIENT, 1f, 1f);
+                                                    }
+                                                });
+                                                plugin.getProxy().getAllPlayers().stream().filter(player1 -> player1.hasPermission("velocity.staff")).forEach(playerOnline -> {
+                                                    playerOnline.sendMessage(Component.text("§7" + player.getUsername() + " §chas been permanently banned by §7Console"));
+                                                    playerOnline.sendMessage(Component.text("§cReason: §7" + reason));
+                                                    playerOnline.sendMessage(Component.text(""));
+                                                });
+                                                source.sendMessage(Component.text(""));
+                                                source.sendMessage(Component.text("§7" + player.getUsername() + " §chas been permanently banned by §7Console"));
+                                                source.sendMessage(Component.text("§cReason: §7" + reason));
+                                                source.sendMessage(Component.text(""));
                                             }
                                         }
                                     } else {
-                                        String uuid = plugin.getBanManager().getUUID(playerArg);
-                                        String playerName = plugin.getBanManager().getUsername(uuid);
-                                        if (uuid != null) {
+                                        if (source instanceof Player playerSource) {
+                                            String uuid = plugin.getBanManager().getUUID(playerArg);
+                                            String playerName = plugin.getBanManager().getUsername(uuid);
+                                            if (uuid != null) {
 
-                                            Ban currentBan = plugin.getBanManager().getBan(uuid);
-                                            if (currentBan != null) {
+                                                Ban currentBan = plugin.getBanManager().getBan(uuid);
+                                                if (currentBan != null) {
 
-                                                long bannedTime = plugin.getBanManager().getBan(uuid).getBannedTime();
-                                                source.sendMessage(Component.text("§c" + playerName + "§chas been permanently banned on §7" + Utils.parseDateTime(bannedTime, true)));
+                                                    long bannedTime = plugin.getBanManager().getBan(uuid).getBannedTime();
+                                                    playerSource.sendMessage(Component.text("§7" + playerName + " §chas been permanently banned on §7" + Utils.parseDateTime(bannedTime, true)));
 
+                                                } else {
+                                                    plugin.getBanManager().addBan(uuid, playerName, playerSource.getUsername(), reason, -1);
+                                                    plugin.getProxy().getAllPlayers().forEach(playerOnline -> {
+                                                        playerOnline.sendMessage(Utils.formatBanMessage(plugin));
+                                                        ProtocolizePlayer playerProtocol = Protocolize.playerProvider().player(playerOnline.getUniqueId());
+                                                        if (playerProtocol != null) {
+                                                            playerProtocol.playSound(Sound.BLOCK_ANVIL_PLACE, SoundCategory.AMBIENT, 1f, 1f);
+                                                        }
+                                                    });
+                                                    plugin.getProxy().getAllPlayers().stream().filter(player1 -> player1.hasPermission("velocity.staff")).forEach(playerOnline -> {
+                                                        playerOnline.sendMessage(Component.text("§7" + playerName + " §chas been permanently banned by §7" + playerSource.getUsername()));
+                                                        playerOnline.sendMessage(Component.text("§cReason: §7" + reason));
+                                                        playerOnline.sendMessage(Component.text(""));
+                                                    });
+                                                    plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
+                                                    plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§7" + playerName + " §chas been permanently banned by §7" + playerSource.getUsername()));
+                                                    plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§cReason: §7" + reason));
+                                                    plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
+                                                }
                                             } else {
-                                                plugin.getBanManager().addBan(uuid, playerName, playerSource.getUsername(), reason, -1);
-                                                source.sendMessage(Utils.formatBanMessage(plugin));
+                                                playerSource.sendMessage(Component.text("§7" + playerArg + " §cplayer data can't be found within database!"));
                                             }
-                                        } else {
-                                            source.sendMessage(Component.text("§c" + playerArg + "§cplayer data can't be found within database!"));
+
+                                        } else if (source instanceof ConsoleCommandSource) {
+                                            String uuid = plugin.getBanManager().getUUID(playerArg);
+                                            String playerName = plugin.getBanManager().getUsername(uuid);
+                                            if (uuid != null) {
+
+                                                Ban currentBan = plugin.getBanManager().getBan(uuid);
+                                                if (currentBan != null) {
+                                                    long bannedTime = plugin.getBanManager().getBan(uuid).getBannedTime();
+                                                    source.sendMessage(Component.text("§7" + playerName + " §chas been permanently banned on §7" + Utils.parseDateTime(bannedTime, true)));
+                                                } else {
+                                                    plugin.getBanManager().addBan(uuid, playerName, "Console", reason, -1);
+                                                    plugin.getProxy().getAllPlayers().forEach(playerOnline -> {
+                                                        playerOnline.sendMessage(Utils.formatBanMessage(plugin));
+                                                        ProtocolizePlayer playerProtocol = Protocolize.playerProvider().player(playerOnline.getUniqueId());
+                                                        if (playerProtocol != null) {
+                                                            playerProtocol.playSound(Sound.BLOCK_ANVIL_PLACE, SoundCategory.AMBIENT, 1f, 1f);
+                                                        }
+                                                    });
+                                                    plugin.getProxy().getAllPlayers().stream().filter(player1 -> player1.hasPermission("velocity.staff")).forEach(playerOnline -> {
+                                                        playerOnline.sendMessage(Component.text("§7" + playerName + " §chas been permanently banned by §7Console"));
+                                                        playerOnline.sendMessage(Component.text("§cReason: §7" + reason));
+                                                        playerOnline.sendMessage(Component.text(""));
+                                                    });
+                                                    source.sendMessage(Component.text(""));
+                                                    source.sendMessage(Component.text("§7" + playerName + " §chas been permanently banned by §7Console"));
+                                                    source.sendMessage(Component.text("§cReason: §7" + reason));
+                                                    source.sendMessage(Component.text(""));
+                                                }
+                                            } else {
+                                                source.sendMessage(Component.text("§7" + playerArg + " §cplayer data can't be found within database!"));
+                                            }
                                         }
                                     }
                                     return Command.SINGLE_SUCCESS;

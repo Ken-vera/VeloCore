@@ -160,6 +160,22 @@ public final class Debug {
                                                 playerSource.sendMessage(Component.text("An error occurred while dropping tables."));
                                             }
                                         }
+                                    } else if (subCommand.equalsIgnoreCase("addgroup")) {
+                                        String uuid = playerSource.getUniqueId().toString();
+                                        String group = StringArgumentType.getString(ctx, "table");
+                                        try {
+                                            plugin.getPlayerData().addGroup(uuid, group);
+                                        } catch (SQLException e) {
+                                            e.printStackTrace();
+                                        }
+                                    } else if (subCommand.equalsIgnoreCase("removegroup")) {
+                                        String uuid = playerSource.getUniqueId().toString();
+                                        String group = StringArgumentType.getString(ctx, "table");
+                                        try {
+                                            plugin.getPlayerData().removeGroup(uuid, group);
+                                        } catch (SQLException e) {
+                                            e.printStackTrace();
+                                        }
                                     }
                                     return Command.SINGLE_SUCCESS;
                                 })

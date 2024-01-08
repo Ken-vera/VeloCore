@@ -1,8 +1,7 @@
 package me.kenvera.velocore.database;
 
-import com.velocitypowered.api.proxy.Player;
 import me.kenvera.velocore.VeloCore;
-import net.kyori.adventure.text.Component;
+import me.kenvera.velocore.listeners.RedisListener;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
@@ -13,7 +12,7 @@ import java.util.concurrent.Executors;
 
 public class RedisManager {
     private final VeloCore plugin;
-    private JedisPool jedispool;
+    private final JedisPool jedispool;
     private JedisPubSub jedisPubSub;
     private final ExecutorService executorService = Executors.newFixedThreadPool(2);
 
@@ -29,22 +28,16 @@ public class RedisManager {
         jedisPoolConfig.setNumTestsPerEvictionRun(-1);
         jedisPoolConfig.setBlockWhenExhausted(false);
         this.jedispool = new JedisPool(jedisPoolConfig, host, port, 5000, password, 0);
+        String channelName = plugin.getConfigManager().getString("redis.channel", "chronosync");
 
-        subscribe();
+        subscribe(channelName);
     }
 
-    public void subscribe() {
+    public void subscribe(String channelName) {
         executorService.execute(() -> {
-
-            //subscribe to jedisPool
             try (Jedis jedis = jedispool.getResource()) {
-                jedisPubSub = new JedisPubSub() {
-                    @Override
-                    public void onMessage(String channel, String message) {
-                        shakeIncomingMessage(message);
-                    }
-                };
-                jedis.subscribe(jedisPubSub, "globalMessage");
+                jedisPubSub = new RedisListener(plugin, this, channelName);
+                jedis.subscribe(jedisPubSub, channelName);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -58,21 +51,10 @@ public class RedisManager {
         }
     }
 
-    public void publish(String message) {
-        executorService.execute(() -> {
-            try (Jedis jedis = jedispool.getResource()) {
-                jedis.publish("globalMessage", message);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
     public void publish(String channel, String message) {
         executorService.execute(() -> {
             try (Jedis jedis = jedispool.getResource()) {
                 jedis.publish(channel, message);
-
             }
         });
     }
@@ -81,41 +63,11 @@ public class RedisManager {
         return jedispool;
     }
 
-    public void shakeIncomingMessage(String message) {
-        executorService.execute(() -> {
-            try {
-                if (message.startsWith("globalmessage:")) {
-                    receiveGlobalChat(message);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
-    public void receiveGlobalChat(String message) {
-        String prefix = "§7[§cGLOBAL§7] ";
-        String[] rawMessage = message.split(":");
-        String server = "§7[§b" + rawMessage[1] + "§7] ";
-        String playerName = "§7" + rawMessage[2] + " §7: ";
-        message = rawMessage[3];
-        String[] split = message.split(">");
-
-        for (Player player : plugin.getProxy().getAllPlayers()) {
-            player.sendMessage(Component.text(prefix + server + playerName + message));
-//            player.sendMessage(LegacyComponentSerializer.legacySection().deserialize(("§7[§cGLOBAL§7] [§b" + server.toUpperCase() + "§7] " + message)));
-        }
-        System.out.println(prefix + server + playerName + message);
-        message = "[GLOBAL] " + server.replaceAll("§.", "") + playerName.replaceAll("§.", "") + rawMessage[3];
-        plugin.getDiscordChannel().sendDiscordChat("1154435789657215078", message);
-    }
-
     public void close() {
         unsubscribe();
 //        jedispool.close();
         executorService.shutdownNow(); // Shut down the ExecutorService
     }
-
 
     public int getNumActiveConnections() {
         return jedispool.getNumActive();
@@ -127,5 +79,23 @@ public class RedisManager {
 
     public int getMaxTotalConnections() {
         return jedispool.getMaxTotal();
+    }
+
+    public void setKey(String key, Long value) {
+        try (Jedis jedis = jedispool.getResource()) {
+            jedis.set(key, String.valueOf(value));
+        }
+    }
+
+    public String getKey(String key) {
+        try (Jedis jedis = jedispool.getResource()) {
+            return jedis.get(key);
+        }
+    }
+
+    public void removeKey(String key) {
+        try (Jedis jedis = jedispool.getResource()) {
+            jedis.del(key);
+        }
     }
 }

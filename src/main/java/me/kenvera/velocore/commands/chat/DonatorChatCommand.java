@@ -22,19 +22,24 @@ public final class DonatorChatCommand {
                             String message = StringArgumentType.getString(ctx, "message");
                             CommandSource source = ctx.getSource();
                             Player playerSource = (Player) source;
+                            Long mute = Long.parseLong(plugin.getRedis().getKey("mute:" + playerSource.getUniqueId().toString()));
 
                             if (!message.isEmpty()) {
-                                if (plugin.getCooldown("donatorchat", playerSource.getUniqueId()) == null || playerSource.hasPermission("velocity.donatorchat.bypass")) {
-                                    String server = plugin.getProxy().getPlayer(playerSource.getUsername()).flatMap(Player::getCurrentServer).get().getServerInfo().getName();
-                                    String formattedMessage = plugin.getConfigManager().getString("donator-chat.prefix", null)
-                                            .replaceAll("%server%", server)
-                                            .replaceAll("%player%", playerSource.getUsername())
-                                            .replaceAll("%message%", message.replaceAll("&", "§"));
+                                if (mute == null || mute <= System.currentTimeMillis()) {
+                                    if (plugin.getCooldown("donatorchat", playerSource.getUniqueId()) == null || playerSource.hasPermission("velocity.donatorchat.bypass")) {
+                                        String server = plugin.getProxy().getPlayer(playerSource.getUsername()).flatMap(Player::getCurrentServer).get().getServerInfo().getName();
+                                        String formattedMessage = plugin.getConfigManager().getString("donator-chat.prefix", null)
+                                                .replaceAll("%server%", server)
+                                                .replaceAll("%player%", playerSource.getUsername())
+                                                .replaceAll("%message%", message.replaceAll("&", "§"));
 
-                                    plugin.getProxy().getAllPlayers().stream().filter(player -> player.hasPermission("velocity.donatorchat.see")).forEach(player -> player.sendMessage(Component.text(formattedMessage)));
-                                    plugin.setCooldown("donatorchat", 10, playerSource.getUniqueId());
+                                        plugin.getProxy().getAllPlayers().stream().filter(player -> player.hasPermission("velocity.donatorchat.see")).forEach(player -> player.sendMessage(Component.text(formattedMessage)));
+                                        plugin.setCooldown("donatorchat", 10, playerSource.getUniqueId());
+                                    } else {
+                                        playerSource.sendMessage(Component.text("§cYou can't use donator chat that frequent!"));
+                                    }
                                 } else {
-                                    playerSource.sendMessage(Component.text("§cYou can't use donator chat that frequent!"));
+                                    playerSource.sendMessage(Component.text("§cYou've been prevented from using this channel while muted!"));
                                 }
                             } else {
                                 playerSource.sendMessage(Component.text("§6Usage : /donatorchat <message>"));

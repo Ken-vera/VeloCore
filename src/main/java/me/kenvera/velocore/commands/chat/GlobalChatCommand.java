@@ -26,6 +26,13 @@ public final class GlobalChatCommand {
                             String message = StringArgumentType.getString(ctx, "message");
                             CommandSource source = ctx.getSource();
                             Player playerSource = (Player) source;
+                            String mute = plugin.getRedis().getKey("mute:" + playerSource.getUniqueId().toString());
+                            long parsedMute;
+                            if (mute != null) {
+                                parsedMute = Long.parseLong(mute);
+                            } else {
+                                parsedMute = 0L;
+                            }
 
                             if (!message.isEmpty()) {
                                 if (plugin.getCooldown("globalchat", playerSource.getUniqueId()) == null || playerSource.hasPermission("velocity.globalchat.bypass")) {
@@ -35,15 +42,19 @@ public final class GlobalChatCommand {
                                     CachedMetaData metaData = user.getCachedData().getMetaData();
                                     String prefix = Objects.requireNonNull(metaData.getPrefix()).replaceAll("&", "§");
 
-                                    String server = plugin.getProxy().getPlayer(playerSource.getUsername()).flatMap(Player::getCurrentServer).get().getServerInfo().getName();
-                                    String formattedMessage = plugin.getConfigManager().getString("global-chat.prefix", null).replaceAll("&", "§")
-                                            .replaceAll("%server%", server)
-                                            .replaceAll("%prefix%", prefix)
-                                            .replaceAll("%player%", playerSource.getUsername())
-                                            .replaceAll("%message%", message.replaceAll("&", "§"));
+                                    if (parsedMute <= System.currentTimeMillis()) {
+                                        String server = plugin.getProxy().getPlayer(playerSource.getUsername()).flatMap(Player::getCurrentServer).get().getServerInfo().getName();
+                                        String formattedMessage = plugin.getConfigManager().getString("global-chat.prefix", null).replaceAll("&", "§")
+                                                .replaceAll("%server%", server)
+                                                .replaceAll("%prefix%", prefix)
+                                                .replaceAll("%player%", playerSource.getUsername())
+                                                .replaceAll("%message%", message.replaceAll("&", "§"));
 
-                                    plugin.getProxy().getAllPlayers().forEach(player -> player.sendMessage(Component.text(formattedMessage)));
-                                    plugin.setCooldown("globalchat", 10, playerSource.getUniqueId());
+                                        plugin.getProxy().getAllPlayers().forEach(player -> player.sendMessage(Component.text(formattedMessage)));
+                                        plugin.setCooldown("globalchat", 10, playerSource.getUniqueId());
+                                    } else {
+                                        playerSource.sendMessage(Component.text("§cYou've been prevented from using this channel while muted!"));
+                                    }
                                 } else {
                                     playerSource.sendMessage(Component.text("§cYou can't use global chat that frequent!"));
                                 }

@@ -10,6 +10,10 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
+import dev.simplix.protocolize.api.Protocolize;
+import dev.simplix.protocolize.api.SoundCategory;
+import dev.simplix.protocolize.api.player.ProtocolizePlayer;
+import dev.simplix.protocolize.data.Sound;
 import me.kenvera.velocore.VeloCore;
 import me.kenvera.velocore.managers.Ban;
 import me.kenvera.velocore.managers.Utils;
@@ -52,7 +56,6 @@ public final class TempBanCommand {
                                 .then(RequiredArgumentBuilder.<CommandSource, String>argument("reason", StringArgumentType.string())
                                         .executes(ctx -> {
                                             CommandSource source = ctx.getSource();
-                                            Player playerSource = (Player) source;
                                             String playerArg = StringArgumentType.getString(ctx, "player");
                                             String reason = StringArgumentType.getString(ctx, "reason");
                                             String duration = StringArgumentType.getString(ctx, "duration");
@@ -61,37 +64,145 @@ public final class TempBanCommand {
                                             Optional<Player> targetPlayer = plugin.getProxy().getPlayer(playerArg);
                                             if (targetPlayer.isPresent()) {
                                                 Player player = targetPlayer.get();
-                                                if (player.getPermissionValue("velocity.ban.prevent") != Tristate.TRUE) {
-                                                    plugin.getBanManager().addBan(player.getUniqueId().toString(), player.getUsername(), playerSource.getUsername(), reason, expire);
-                                                    player.disconnect(Utils.formatBannedMessage(plugin, source instanceof ConsoleCommandSource ? "Console" : (((Player) source).getUsername()), reason, expire, plugin.getBanManager().getID(player.getUniqueId().toString())));
-                                                    source.sendMessage(Utils.formatBanMessage(plugin));
 
-                                                } else {
-                                                    source.sendMessage(Component.text("§cThis player is immuned to ban!"));
+                                                if (source instanceof Player playerSource) {
+                                                    if (player.getPermissionValue("velocity.ban.prevent") != Tristate.TRUE) {
+                                                        plugin.getBanManager().addBan(player.getUniqueId().toString(), player.getUsername(), playerSource.getUsername(), reason, expire);
+                                                        player.disconnect(Utils.formatBannedMessage(plugin, playerSource.getUsername(), reason, expire, plugin.getBanManager().getID(player.getUniqueId().toString())));
+                                                        plugin.getProxy().getAllPlayers().forEach(playerOnline -> {
+                                                            playerOnline.sendMessage(Utils.formatBanMessage(plugin));
+                                                            ProtocolizePlayer playerProtocol = Protocolize.playerProvider().player(playerOnline.getUniqueId());
+                                                            if (playerProtocol != null) {
+                                                                playerProtocol.playSound(Sound.BLOCK_ANVIL_PLACE, SoundCategory.AMBIENT, 1f, 1f);
+                                                            }
+                                                        });
+                                                        plugin.getProxy().getAllPlayers().stream().filter(player1 -> player1.hasPermission("velocity.staff")).forEach(playerOnline -> {
+                                                            playerOnline.sendMessage(Component.text("§7" + player.getUsername() + " §chas been temporarily banned by §7" + playerSource.getUsername()));
+                                                            playerOnline.sendMessage(Component.text("§cDuration: §7" + duration));
+                                                            playerOnline.sendMessage(Component.text("§cReason: §7" + reason));
+                                                            playerOnline.sendMessage(Component.text(""));
+                                                        });
+                                                        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
+                                                        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§7" + player.getUsername() + " §chas been temporarily banned by §7" + playerSource.getUsername()));
+                                                        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§cDuration: §7" + duration));
+                                                        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§cReason: §7" + reason));
+                                                        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
+                                                    } else {
+                                                        playerSource.sendMessage(Component.text("§cThis player is immuned to ban!"));
+                                                    }
+
+                                                } else if (source instanceof ConsoleCommandSource) {
+                                                    plugin.getBanManager().addBan(player.getUniqueId().toString(), player.getUsername(), "Console", reason, expire);
+                                                    player.disconnect(Utils.formatBannedMessage(plugin, "Console", reason, expire, plugin.getBanManager().getID(player.getUniqueId().toString())));
+                                                    plugin.getProxy().getAllPlayers().forEach(playerOnline -> {
+                                                        playerOnline.sendMessage(Utils.formatBanMessage(plugin));
+                                                        ProtocolizePlayer playerProtocol = Protocolize.playerProvider().player(playerOnline.getUniqueId());
+                                                        if (playerProtocol != null) {
+                                                            playerProtocol.playSound(Sound.BLOCK_ANVIL_PLACE, SoundCategory.AMBIENT, 1f, 1f);
+                                                        }
+                                                    });
+                                                    plugin.getProxy().getAllPlayers().stream().filter(player1 -> player1.hasPermission("velocity.staff")).forEach(playerOnline -> {
+                                                        playerOnline.sendMessage(Component.text("§7" + player.getUsername() + " §chas been temporarily banned by §7Console"));
+                                                        playerOnline.sendMessage(Component.text("§cDuration: §7" + duration));
+                                                        playerOnline.sendMessage(Component.text("§cReason: §7" + reason));
+                                                        playerOnline.sendMessage(Component.text(""));
+                                                    });
+                                                    source.sendMessage(Component.text(""));
+                                                    source.sendMessage(Component.text("§7" + player.getUsername() + " §chas been temporarily banned by §7Console"));
+                                                    source.sendMessage(Component.text("§cDuration: §7" + duration));
+                                                    source.sendMessage(Component.text("§cReason: §7" + reason));
+                                                    source.sendMessage(Component.text(""));
                                                 }
+
                                             } else {
                                                 String uuid = plugin.getBanManager().getUUID(playerArg);
                                                 String playerName = plugin.getBanManager().getUsername(uuid);
-                                                if (uuid != null) {
-                                                    Ban currentBan = plugin.getBanManager().getBan(uuid);
-                                                    if (currentBan != null) {
-                                                        if (currentBan.getExpire() != -1) {
-                                                            source.sendMessage(Component.text("§c" + playerName + " §chas been temporarily banned until §7" + Utils.parseDateTime(currentBan.getExpire(), true)));
+
+                                                if (source instanceof Player playerSource) {
+                                                    if (uuid != null) {
+                                                        Ban currentBan = plugin.getBanManager().getBan(uuid);
+                                                        if (currentBan != null) {
+                                                            if (currentBan.getExpire() != -1) {
+                                                                playerSource.sendMessage(Component.text(""));
+                                                                playerSource.sendMessage(Component.text("§7" + playerName + " §chas been temporarily banned until §7" + Utils.parseDateTime(currentBan.getExpire(), true) + " §cby §7" + currentBan.getIssuer()));
+                                                                playerSource.sendMessage(Component.text("§cReason: " + currentBan.getReason()));
+                                                                playerSource.sendMessage(Component.text(""));
+                                                            } else {
+                                                                playerSource.sendMessage(Component.text(""));
+                                                                playerSource.sendMessage(Component.text("§7" + playerName + " §chas been permanently banned on §7" + Utils.parseDateTime(currentBan.getBannedTime(), true) + " §cby §7" + currentBan.getIssuer()));
+                                                                playerSource.sendMessage(Component.text("§cReason: " + currentBan.getReason()));
+                                                                playerSource.sendMessage(Component.text(""));
+                                                            }
                                                         } else {
-                                                            source.sendMessage(Component.text("§c" + playerName + " §chas been permanently banned on §7" + Utils.parseDateTime(currentBan.getBannedTime(), true)));
+                                                            plugin.getBanManager().addBan(uuid, playerName, playerSource.getUsername(), reason, expire);
+                                                            plugin.getProxy().getAllPlayers().forEach(playerOnline -> {
+                                                                playerOnline.sendMessage(Utils.formatBanMessage(plugin));
+                                                                ProtocolizePlayer playerProtocol = Protocolize.playerProvider().player(playerOnline.getUniqueId());
+                                                                if (playerProtocol != null) {
+                                                                    playerProtocol.playSound(Sound.BLOCK_ANVIL_PLACE, SoundCategory.AMBIENT, 1f, 1f);
+                                                                }
+                                                            });
+                                                            plugin.getProxy().getAllPlayers().stream().filter(player1 -> player1.hasPermission("velocity.staff")).forEach(playerOnline -> {
+                                                                playerOnline.sendMessage(Component.text("§7" + playerName + " §chas been temporarily banned by §7" + playerSource.getUsername()));
+                                                                playerOnline.sendMessage(Component.text("§cDuration: §7" + duration));
+                                                                playerOnline.sendMessage(Component.text("§cReason: §7" + reason));
+                                                                playerOnline.sendMessage(Component.text(""));
+                                                            });
+                                                            plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
+                                                            plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§7" + playerName + " §chas been temporarily banned by §7" + playerSource.getUsername()));
+                                                            plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§cDuration: §7" + duration));
+                                                            plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§cReason: §7" + reason));
+                                                            plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
                                                         }
                                                     } else {
-                                                        plugin.getBanManager().addBan(uuid, playerName, playerSource.getUsername(), reason, expire);
-                                                        for (Player player : plugin.getProxy().getAllPlayers()) {
-                                                            player.sendMessage(Utils.formatBanBroadcast(plugin));
-                                                        }
+                                                        source.sendMessage(Component.text("§7" + playerArg + " §cplayer data can't be found within database!"));
                                                     }
-                                                } else {
-                                                    source.sendMessage(Component.text("§c" + playerArg + " §cplayer data can't be found within database!"));
+
+                                                } else if (source instanceof ConsoleCommandSource) {
+                                                    if (uuid != null) {
+                                                        Ban currentBan = plugin.getBanManager().getBan(uuid);
+                                                        if (currentBan != null) {
+                                                            if (currentBan.getExpire() != -1) {
+                                                                source.sendMessage(Component.text(""));
+                                                                source.sendMessage(Component.text("§7" + playerName + " §chas been temporarily banned until §7" + Utils.parseDateTime(currentBan.getExpire(), true) + " §cby §7" + currentBan.getIssuer()));
+                                                                source.sendMessage(Component.text("§cReason: " + currentBan.getReason()));
+                                                                source.sendMessage(Component.text(""));
+                                                            } else {
+                                                                source.sendMessage(Component.text(""));
+                                                                source.sendMessage(Component.text("§7" + playerName + " §chas been permanently banned on §7" + Utils.parseDateTime(currentBan.getBannedTime(), true) + " §cby §7" + currentBan.getIssuer()));
+                                                                source.sendMessage(Component.text("§cReason: " + currentBan.getReason()));
+                                                                source.sendMessage(Component.text(""));
+                                                            }
+                                                        } else {
+                                                            plugin.getBanManager().addBan(uuid, playerName, "Console", reason, expire);
+                                                            plugin.getProxy().getAllPlayers().forEach(playerOnline -> {
+                                                                playerOnline.sendMessage(Utils.formatBanMessage(plugin));
+                                                                ProtocolizePlayer playerProtocol = Protocolize.playerProvider().player(playerOnline.getUniqueId());
+                                                                if (playerProtocol != null) {
+                                                                    playerProtocol.playSound(Sound.BLOCK_ANVIL_PLACE, SoundCategory.AMBIENT, 1f, 1f);
+                                                                }
+                                                            });
+                                                            plugin.getProxy().getAllPlayers().stream().filter(player1 -> player1.hasPermission("velocity.staff")).forEach(playerOnline -> {
+                                                                playerOnline.sendMessage(Component.text("§7" + playerName + " §chas been temporarily banned by §7Console"));
+                                                                playerOnline.sendMessage(Component.text("§cDuration: §7" + duration));
+                                                                playerOnline.sendMessage(Component.text("§cReason: §7" + reason));
+                                                                playerOnline.sendMessage(Component.text(""));
+                                                            });
+                                                            plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
+                                                            plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§7" + playerName + " §chas been temporarily banned by §7Console"));
+                                                            plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§cDuration: §7" + duration));
+                                                            plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§cReason: §7" + reason));
+                                                            plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
+                                                        }
+                                                    } else {
+                                                        source.sendMessage(Component.text("§7" + playerArg + " §cplayer data can't be found within database!"));
+                                                    }
                                                 }
                                             }
                                             return Command.SINGLE_SUCCESS;
-                                        })))
+                                        })
+                                )
+                        )
                 ).build();
         return new BrigadierCommand(node);
     }

@@ -13,6 +13,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.UUID;
 import java.util.List;
 
@@ -21,6 +22,8 @@ public class PlayerData {
     private static final String MUTED_CRITERIA = "muted > ? OR muted IS NOT NULL";
     private static final String GET_GROUP = "SELECT `group` FROM CNS1_cnplayerdata_1.player_data WHERE uuid = ? LIMIT 1";
     private static final String SET_GROUP = "INSERT INTO CNS1_cnplayerdata_1.player_data (uuid, `group`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `group` = VALUES(`group`)";
+    private static final String ADD_GROUP = "INSERT INTO CNS1_cnplayerdata_1.player_data (uuid, `group`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `group` = VALUES(`group`)";
+    private static final String REMOVE_GROUP = "INSERT INTO CNS1_cnplayerdata_1.player_data (uuid, `group`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `group` = VALUES(`group`)";
     private static final String GET_PLAYER_DATA = "SELECT COUNT(*) FROM CNS1_cnplayerdata_1.player_data WHERE uuid = ? AND username = ?";
     private static final String INSERT_PLAYER_DATA = "INSERT INTO CNS1_cnplayerdata_1.player_data (uuid, username, `group`, first_join) VALUES (?, ?, ?, ?)";
     private static final String GET_ID = "SELECT uuid FROM CNS1_cnplayerdata_1.player_data WHERE username = ?";
@@ -78,11 +81,79 @@ public class PlayerData {
             User user = plugin.getLuckPerms().getUserManager().getUser(UUID.fromString(uuid));
             Group assignGroup = plugin.getLuckPerms().getGroupManager().getGroup(group);
             if (assignGroup != null) {
+                if (group.equalsIgnoreCase("default")) {
+                    assert user != null;
+                    user.data().clear(NodeType.INHERITANCE::matches);
+                    plugin.getLuckPerms().getUserManager().saveUser(user);
+                    plugin.getLogger().info("§aSuccesfully set " + user.getUsername() + "'s §aGroup to " + group);
+                } else {
+                    assert user != null;
+                    user.data().clear(NodeType.INHERITANCE::matches);
+                    user.data().add(InheritanceNode.builder(assignGroup).build());
+                    plugin.getLuckPerms().getUserManager().saveUser(user);
+                    plugin.getLogger().info("§aSuccesfully set " + user.getUsername() + "'s §aGroup to " + group);
+                }
+            }
+        }
+    }
+
+    public void addGroup(String uuid, String group) throws SQLException {
+        try (Connection connection = plugin.getSqlConnection().getConnection();
+             PreparedStatement statement = connection.prepareStatement(ADD_GROUP)) {
+            String[] currentGroups = getGroup(uuid).split(",");
+            List<String> assignedGroups = new ArrayList<>();
+
+            List<String> newGroups = new ArrayList<>(List.of(currentGroups));
+            newGroups.add(group);
+
+            String stringGroups = String.join(",", newGroups);
+            statement.setString(1, uuid);
+            statement.setString(2, stringGroups);
+
+            statement.executeUpdate();
+
+            User user = plugin.getLuckPerms().getUserManager().getUser(UUID.fromString(uuid));
+            user.data().clear(NodeType.INHERITANCE::matches);
+            for (String groupName : newGroups) {
+                Group assignGroup = plugin.getLuckPerms().getGroupManager().getGroup(groupName);
+
+                if (assignGroup != null) {
+                    assert user != null;
+                    user.data().add(InheritanceNode.builder(assignGroup).build());
+                    assignedGroups.add(groupName);
+                } else {
+                    System.out.println("§cError processing " + group + " §cgroup!");
+                }
+            }
+            plugin.getLuckPerms().getUserManager().saveUser(user);
+            plugin.getLogger().info("§aSuccesfully set " + user.getUsername() + "'s §aGroup to " + assignedGroups);
+        }
+    }
+
+    public void removeGroup(String uuid, String group) throws SQLException{
+        try (Connection connection = plugin.getSqlConnection().getConnection();
+             PreparedStatement statement = connection.prepareStatement(REMOVE_GROUP)) {
+            String[] currentGroups = getGroup(uuid).split(",");
+
+            List<String> newGroups = new ArrayList<>(List.of(currentGroups));
+            newGroups.remove(group);
+
+            String stringGroups = String.join(",", newGroups);
+            statement.setString(1, uuid);
+            statement.setString(2, stringGroups);
+
+            statement.executeUpdate();
+
+            User user = plugin.getLuckPerms().getUserManager().getUser(UUID.fromString(uuid));
+            Group assignGroup = plugin.getLuckPerms().getGroupManager().getGroup(group);
+
+            if (assignGroup != null) {
                 assert user != null;
-                user.data().clear(NodeType.INHERITANCE::matches);
-                user.data().add(InheritanceNode.builder(assignGroup).build());
+                user.data().remove(InheritanceNode.builder(assignGroup).build());
                 plugin.getLuckPerms().getUserManager().saveUser(user);
-                plugin.getLogger().info("§aSuccesfully set " + user.getUsername() + "'s §aGroup to " + group);
+                plugin.getLogger().info("§aSuccesfully remove " + group + " §afrom §b" + user.getUsername());
+            } else {
+                System.out.println("§cError processing " + group + " §cgroup!");
             }
         }
     }
@@ -179,6 +250,7 @@ public class PlayerData {
     }
 
     public Long isMuted(Player player) {
+        System.out.println("ismuted " + player.getUsername());
         try (Connection connection = plugin.getSqlConnection().getConnection();
             PreparedStatement statement = connection.prepareStatement(GET_MUTE)) {
 
@@ -197,6 +269,7 @@ public class PlayerData {
     }
 
     public void setMuted(String uuid, Long duration) throws SQLException {
+        System.out.println(uuid);
         try (Connection connection = plugin.getSqlConnection().getConnection();
              PreparedStatement statement = connection.prepareStatement(INSERT_MUTE)) {
 

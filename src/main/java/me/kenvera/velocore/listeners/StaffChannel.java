@@ -4,15 +4,11 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.player.PlayerChatEvent;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.proxy.Player;
-import com.velocitypowered.api.proxy.ProxyServer;
 import me.kenvera.velocore.VeloCore;
-import me.kenvera.velocore.discordshake.DiscordConnection;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.kyori.adventure.text.Component;
-import net.luckperms.api.LuckPerms;
-import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.cacheddata.CachedMetaData;
 import net.luckperms.api.model.user.User;
 
@@ -45,15 +41,15 @@ public class StaffChannel {
                     if (player.getPermissionValue("velocity.staff") == Tristate.TRUE) {
                         if (muteStatus) {
                             event.setResult(PlayerChatEvent.ChatResult.denied());
-                            message = "§k" + message.replaceAll(".", "§k$0");
-                            player.sendMessage(Component.text("§7[§cStaffChat§7] [§6" + server.toUpperCase() + "§7] " + prefix + " " + sender.getUsername() + " : §7" + message));
+                            message = "§k" + message.replaceAll("\\.", "§k$0");
+                            player.sendMessage(Component.text("§7[§cStaffChat§7] [§6" + server.toUpperCase() + "§7] " + prefix + " " + sender.getUsername() + " : §6" + message));
                         } else {
                             event.setResult(PlayerChatEvent.ChatResult.denied());
-                            player.sendMessage(Component.text("§7[§cStaffChat§7] [§6" + server.toUpperCase() + "§7] " + prefix + " " + sender.getUsername() + " : §7" + message));
+                            player.sendMessage(Component.text("§7[§cStaffChat§7] [§6" + server.toUpperCase() + "§7] " + prefix + " " + sender.getUsername() + " : §6" + message));
                         }
                     }
                 }
-                System.out.println("§7[§cStaffChat§7] [§6" + server.toUpperCase() + "§7] " + prefix + " " + sender.getUsername() + " : §7" + message);
+                System.out.println("§7[§cStaffChat§7] [§6" + server.toUpperCase() + "§7] " + prefix + " " + sender.getUsername() + " : §6" + message);
                 message = plugin.getConfigManager().getString("discord.staff-channel-prefix", null).replaceAll("%server%", server) + prefix.replaceAll("§", "") + " " + sender.getUsername() + " : §7" + message;
                 sendDiscordChat(sender.getUsername(), message);
             }

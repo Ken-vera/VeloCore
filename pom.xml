@@ -175,6 +175,19 @@
             <id>papermc-repo</id>
             <url>https://repo.papermc.io/repository/maven-public/</url>
         </repository>
+        <repository>
+            <id>kyngs-repo-public</id>
+            <name>Repository</name>
+            <url>https://repo.kyngs.xyz/public</url>
+        </repository>
+        <repository>
+            <id>ajRepo</id>
+            <url>https://repo.ajg0702.us/releases</url>
+        </repository>
+        <repository>
+            <id>exceptionflug</id>
+            <url>https://mvn.exceptionflug.de/repository/exceptionflug-public/</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -245,6 +258,24 @@
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
             <version>3.1.8</version>
+        </dependency>
+        <dependency>
+            <groupId>xyz.kyngs.librelogin</groupId>
+            <artifactId>API</artifactId>
+            <version>0.18.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>us.ajg0702.queue.api</groupId>
+            <artifactId>api</artifactId>
+            <version>2.6.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>dev.simplix</groupId>
+            <artifactId>protocolize-api</artifactId>
+            <version>2.3.1</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>

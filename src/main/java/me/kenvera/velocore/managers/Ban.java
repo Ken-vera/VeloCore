@@ -37,4 +37,8 @@ public class Ban {
     public Long getBannedTime() {
         return bannedTime;
     }
+
+    public String getIssuer() {
+        return issuer;
+    }
 }

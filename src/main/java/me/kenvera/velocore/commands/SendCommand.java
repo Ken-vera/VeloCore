@@ -12,6 +12,7 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import me.kenvera.velocore.VeloCore;
 import net.kyori.adventure.text.Component;
+import xyz.kyngs.librelogin.api.provider.LibreLoginProvider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -127,13 +128,18 @@ public final class SendCommand {
                                     } else {
                                         Optional<Player> targetPlayerOptional = plugin.getProxy().getPlayer(target);
                                         if (targetPlayerOptional.isPresent()) {
+                                            var api = ((LibreLoginProvider<Player, RegisteredServer>) plugin.getProxy().getPluginManager().getPlugin("librelogin").orElseThrow().getInstance().orElseThrow()).getLibreLogin();
                                             Player targetPlayer = targetPlayerOptional.get();
-                                            Optional<RegisteredServer> targetServer = plugin.getProxy().getServer(server);
-                                            if (targetServer.isPresent()) {
-                                                targetPlayer.createConnectionRequest(targetServer.get()).fireAndForget();
-                                                source.sendMessage(Component.text("§aSuccesfully sent " + targetPlayer.getUsername() + " to " + targetServer.get().getServerInfo().getName()));
+                                            if (api.getAuthorizationProvider().isAuthorized(targetPlayer)) {
+                                                Optional<RegisteredServer> targetServer = plugin.getProxy().getServer(server);
+                                                if (targetServer.isPresent()) {
+                                                    targetPlayer.createConnectionRequest(targetServer.get()).fireAndForget();
+                                                    source.sendMessage(Component.text("§aSuccesfully sent " + targetPlayer.getUsername() + " to " + targetServer.get().getServerInfo().getName()));
+                                                } else {
+                                                    source.sendMessage(Component.text("§cServer " + server + " seems to be offline."));
+                                                }
                                             } else {
-                                                source.sendMessage(Component.text("§cServer " + server + " seems to be offline."));
+                                                source.sendMessage(Component.text("§c" + targetPlayer.getUsername() + " §cis not authenticated"));
                                             }
                                         } else {
                                             source.sendMessage(Component.text("§cPlayer " + target + " seems not available within the server."));

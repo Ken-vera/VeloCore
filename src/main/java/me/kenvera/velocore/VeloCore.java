@@ -15,6 +15,7 @@ import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.PluginContainer;
+import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import lombok.Getter;
@@ -35,6 +36,12 @@ import net.kyori.adventure.text.Component;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import org.slf4j.Logger;
+import us.ajg0702.queue.api.AjQueueAPI;
+import us.ajg0702.queue.api.events.PreQueueEvent;
+import us.ajg0702.queue.api.players.AdaptedPlayer;
+import xyz.kyngs.librelogin.api.LibreLoginPlugin;
+import xyz.kyngs.librelogin.api.authorization.AuthorizationProvider;
+import xyz.kyngs.librelogin.api.provider.LibreLoginProvider;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,7 +54,8 @@ import java.util.concurrent.TimeUnit;
         version = "1.0",
         authors = "Kenvera, Mornov",
         dependencies = {
-                @Dependency(id="luckperms")
+                @Dependency(id="luckperms"),
+                @Dependency(id="protocolize")
         }
 )
 public final class VeloCore {
@@ -80,6 +88,7 @@ public final class VeloCore {
     private PlayerData playerData;
     @Getter
     private Ban ban;
+    private LibreLoginPlugin libreLogin;
     private final Cache<String, Cache<UUID, Long>> cooldowns = Caffeine.newBuilder().build();
 
     @Inject
@@ -126,18 +135,29 @@ public final class VeloCore {
 
         EventManager eventManager = proxy.getEventManager();
 
-        for (RegisteredServer server : proxy.getAllServers()) {
-            String serverName = server.getServerInfo().getName();
-            commandManager.register(serverName, new AliasesCommand(proxy, serverName));
-        }
+//        for (RegisteredServer server : proxy.getAllServers()) {
+//            String serverName = server.getServerInfo().getName();
+//            commandManager.register(serverName, new AliasesCommand(proxy, serverName));
+//        }
 
         eventManager.register(this, new PlayerSession(this));
         eventManager.register(this, new StaffSession(this));
         eventManager.register(this, staffChannel);
         eventManager.register(this, discordChannel);
-        eventManager.register(this, new ChatListener(this));
 
         dataBase.loadTables();
+
+        var libreLoginApi = ((LibreLoginProvider<Player, RegisteredServer>) getProxy().getPluginManager().getPlugin("librelogin").orElseThrow().getInstance().orElseThrow()).getLibreLogin();
+        AuthorizationProvider auth = libreLoginApi.getAuthorizationProvider();
+        AjQueueAPI api = AjQueueAPI.getInstance();
+        api.listen(PreQueueEvent.class, event1 -> {
+            AdaptedPlayer player = event1.getPlayer();
+            if (!auth.isAuthorized(player)) {
+                event1.setCancelled(true);
+                player.sendMessage(Component.text("§cYou need to be authenticated first!"));
+                player.sendMessage(Component.text(auth.isAuthorized(player)));
+            }
+        });
     }
 
     @Subscribe

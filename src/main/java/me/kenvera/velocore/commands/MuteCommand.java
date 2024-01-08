@@ -13,7 +13,6 @@ import me.kenvera.velocore.VeloCore;
 import me.kenvera.velocore.managers.Utils;
 import net.kyori.adventure.text.Component;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -59,16 +58,13 @@ public final class MuteCommand {
 
                                     Optional<Player> targetPlayer = plugin.getProxy().getPlayer(playerArg);
                                     if (targetPlayer.isPresent()) {
-                                        try {
-                                            plugin.getPlayerData().setMuted(plugin.getProxy().getPlayer(playerArg).get().getUniqueId().toString(), expire);
-                                            plugin.broadcast("");
-                                            plugin.broadcast("§7Oops! Seems like someone needs a little break from chatting.");
-                                            targetPlayer.get().sendMessage(Component.text("§7You've been muted for " + duration + ". Enjoy the silence!"));
-                                            plugin.broadcastStaff("§7" + targetPlayer.get().getUsername() + "§7 has been muted for " + duration + "§7 by " + playerSource.getUsername());
-                                            plugin.broadcast("");
-                                        } catch (SQLException e) {
-                                            e.printStackTrace();
-                                        }
+//                                            plugin.getPlayerData().setMuted(plugin.getProxy().getPlayer(playerArg).get().getUniqueId().toString(), expire);
+                                        plugin.getRedis().setKey("mute:" + targetPlayer.get().getUniqueId().toString(), expire);
+                                        plugin.broadcast("");
+                                        plugin.broadcast("§7Oops! Seems like someone needs a little break from chatting.");
+                                        targetPlayer.get().sendMessage(Component.text("§7You've been muted for " + duration + ". Enjoy the silence!"));
+                                        plugin.broadcastStaff("§7" + targetPlayer.get().getUsername() + "§7 has been muted for " + duration + "§7 by " + playerSource.getUsername());
+                                        plugin.broadcast("");
                                     }
                                     return Command.SINGLE_SUCCESS;
                                 }))
