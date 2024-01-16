@@ -59,6 +59,14 @@ public class RedisListener extends JedisPubSub {
                                 e.printStackTrace();
                             }
                         }
+                        case "shop" -> {
+                            plugin.getLogger().info("[Group] Received group command (add) for " + uuid + " from backend!");
+                            try {
+                                plugin.getPlayerData().addGroup(uuid, group);
+                            } catch (SQLException e) {
+                                e.printStackTrace();
+                            }
+                        }
                     }
                 }
             }

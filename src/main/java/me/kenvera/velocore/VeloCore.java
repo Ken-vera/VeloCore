@@ -28,10 +28,12 @@ import me.kenvera.velocore.database.RedisManager;
 import me.kenvera.velocore.database.SqlManager;
 import me.kenvera.velocore.discordshake.DiscordConnection;
 import me.kenvera.velocore.donation.DonationAnnouncement;
+import me.kenvera.velocore.hooks.DiscordLogger;
 import me.kenvera.velocore.listeners.*;
 import me.kenvera.velocore.managers.Ban;
 import me.kenvera.velocore.managers.BanManager;
 import me.kenvera.velocore.managers.PlayerData;
+import me.kenvera.velocore.managers.Utils;
 import net.kyori.adventure.text.Component;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
@@ -89,6 +91,10 @@ public final class VeloCore {
     @Getter
     private Ban ban;
     private LibreLoginPlugin libreLogin;
+    @Getter
+    private DiscordLogger discordLogger;
+    @Getter
+    private Utils utils;
     private final Cache<String, Cache<UUID, Long>> cooldowns = Caffeine.newBuilder().build();
 
     @Inject
@@ -117,7 +123,7 @@ public final class VeloCore {
         registerCommand(commandManager, "globallist", null, new GlobalListCommand(proxy), "glist");
         registerCommand(commandManager, "report", ReportCommand.createBrigadierCommand(this), null);
         registerCommand(commandManager, "checkalts", null, new AltsCheckerCommand(proxy));
-        registerCommand(commandManager, "globalchat", GlobalChatCommand.createBrigadierCommand(this), null, "gc");
+        registerCommand(commandManager, "globalchat", GlobalChatCommand.createBrigadierCommand(this), null, "gc", "shout");
         registerCommand(commandManager, "donatorchat", DonatorChatCommand.createBrigadierCommand(this), null,  "dc");
         registerCommand(commandManager, "find", FindCommand.createBrigadierCommand(this), null);
         registerCommand(commandManager, "donationannouncement", null, new DonationAnnouncement(proxy));
@@ -191,6 +197,7 @@ public final class VeloCore {
             discordChannel = new DiscordChannel(this);
             banManager = new BanManager(this);
             playerData = new PlayerData(this);
+            discordLogger = new DiscordLogger(this);
         }
     }
 

@@ -8,11 +8,13 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
+import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import me.kenvera.velocore.VeloCore;
 import me.kenvera.velocore.managers.Utils;
 import net.kyori.adventure.text.Component;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -48,26 +50,62 @@ public final class MuteCommand {
                             return builder.buildFuture();
                         })
                         .then(RequiredArgumentBuilder.<CommandSource, String>argument("duration", StringArgumentType.string())
-                                .executes(ctx -> {
-                                    CommandSource source = ctx.getSource();
-                                    Player playerSource = (Player) source;
-                                    String playerArg = StringArgumentType.getString(ctx, "player");
-                                    String duration = StringArgumentType.getString(ctx, "duration");
+                                .then(RequiredArgumentBuilder.<CommandSource, String>argument("reason", StringArgumentType.greedyString())
+                                        .executes(ctx -> {
+                                            CommandSource source = ctx.getSource();
+                                            String playerArg = StringArgumentType.getString(ctx, "player");
+                                            String duration = StringArgumentType.getString(ctx, "duration");
+                                            String reason = StringArgumentType.getString(ctx, "reason");
 
-                                    long expire = System.currentTimeMillis() + getDuration(duration);
+                                            long expire = System.currentTimeMillis() + getDuration(duration);
 
-                                    Optional<Player> targetPlayer = plugin.getProxy().getPlayer(playerArg);
-                                    if (targetPlayer.isPresent()) {
-//                                            plugin.getPlayerData().setMuted(plugin.getProxy().getPlayer(playerArg).get().getUniqueId().toString(), expire);
-                                        plugin.getRedis().setKey("mute:" + targetPlayer.get().getUniqueId().toString(), expire);
-                                        plugin.broadcast("");
-                                        plugin.broadcast("§7Oops! Seems like someone needs a little break from chatting.");
-                                        targetPlayer.get().sendMessage(Component.text("§7You've been muted for " + duration + ". Enjoy the silence!"));
-                                        plugin.broadcastStaff("§7" + targetPlayer.get().getUsername() + "§7 has been muted for " + duration + "§7 by " + playerSource.getUsername());
-                                        plugin.broadcast("");
-                                    }
-                                    return Command.SINGLE_SUCCESS;
-                                }))
+                                            Optional<Player> targetPlayer = plugin.getProxy().getPlayer(playerArg);
+                                            if (targetPlayer.isPresent()) {
+                                                if (source instanceof Player playerSource) {
+                                                    try {
+                                                        plugin.getPlayerData().setMuted(plugin.getProxy().getPlayer(playerArg).get().getUniqueId().toString(), reason);
+                                                        plugin.getRedis().setKey("mute:" + targetPlayer.get().getUniqueId().toString(), expire);
+                                                        plugin.broadcast("");
+                                                        plugin.broadcast("§7Oops! Seems like someone needs a little break from chatting.");
+                                                        targetPlayer.get().sendMessage(Component.text("§7You've been muted for " + duration + ". Enjoy the silence!"));
+                                                        plugin.broadcastStaff("§7" + targetPlayer.get().getUsername() + "§7 has been muted for " + duration + "§7 by " + playerSource.getUsername());
+                                                        plugin.broadcastStaff("§7Reason: " + reason);
+                                                        plugin.broadcast("");
+
+                                                        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
+                                                        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§7" + targetPlayer.get().getUsername() + "§7 has been muted for " + duration + "§7 by " + playerSource.getUsername()));
+                                                        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§7Reason: " + reason));
+                                                        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
+                                                    } catch (SQLException e) {
+                                                        e.printStackTrace();
+                                                        playerSource.sendMessage(Component.text("§cThere was a SQL error when trying to insert mute!"));
+                                                    }
+                                                } else if (source instanceof ConsoleCommandSource) {
+                                                    try {
+                                                        plugin.getPlayerData().setMuted(plugin.getProxy().getPlayer(playerArg).get().getUniqueId().toString(), reason);
+                                                        plugin.getRedis().setKey("mute:" + targetPlayer.get().getUniqueId().toString(), expire);
+                                                        plugin.broadcast("");
+                                                        plugin.broadcast("§7Oops! Seems like someone needs a little break from chatting.");
+                                                        targetPlayer.get().sendMessage(Component.text("§7You've been muted for " + duration + ". Enjoy the silence!"));
+                                                        plugin.broadcastStaff("");
+                                                        plugin.broadcastStaff("§7" + targetPlayer.get().getUsername() + "§7 has been muted for " + duration + "§7 by Console");
+                                                        plugin.broadcastStaff("§7Reason: " + reason);
+                                                        plugin.broadcast("");
+
+                                                        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
+                                                        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§7" + targetPlayer.get().getUsername() + "§7 has been muted for " + duration + "§7 by Console"));
+                                                        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§7Reason: " + reason));
+                                                        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
+                                                    } catch (SQLException e) {
+                                                        e.printStackTrace();
+                                                        source.sendMessage(Component.text("§cThere was a SQL error when trying to insert mute!"));
+                                                    }
+                                                }
+                                            }
+                                            return Command.SINGLE_SUCCESS;
+                                        })
+                                )
+                        )
                 )
                 .build();
         return new BrigadierCommand(node);

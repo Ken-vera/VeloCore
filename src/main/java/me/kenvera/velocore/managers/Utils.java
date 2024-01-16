@@ -1,17 +1,12 @@
 package me.kenvera.velocore.managers;
 
-import com.velocitypowered.api.proxy.Player;
 import me.kenvera.velocore.VeloCore;
 import net.kyori.adventure.text.Component;
-import net.luckperms.api.cacheddata.CachedMetaData;
-import net.luckperms.api.model.user.User;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Objects;
-import java.util.UUID;
 
 public class Utils {
     private final VeloCore plugin;

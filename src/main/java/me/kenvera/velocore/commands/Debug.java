@@ -12,6 +12,15 @@ import com.velocitypowered.api.proxy.Player;
 import me.kenvera.velocore.VeloCore;
 import me.kenvera.velocore.managers.Ban;
 import me.kenvera.velocore.managers.Utils;
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.Webhook;
+import net.dv8tion.jda.api.entities.WebhookClient;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.interactions.InteractionHook;
+import net.dv8tion.jda.api.requests.restaction.WebhookAction;
+import net.dv8tion.jda.api.requests.restaction.WebhookMessageCreateAction;
+import net.dv8tion.jda.internal.interactions.InteractionHookImpl;
 import net.kyori.adventure.text.Component;
 
 import java.sql.*;
@@ -129,6 +138,30 @@ public final class Debug {
                                 } catch (SQLException e) {
                                     e.printStackTrace();
                                 }
+
+                            } else if (subCommand.equalsIgnoreCase("dc")) {
+                                String targetChannelId = "919806897631158292"; // Replace with your target channel ID
+
+                                // Get the TextChannel instance using the provided channel ID
+                                TextChannel targetChannel = plugin.getDiscordConnection().jda.getTextChannelById(targetChannelId);
+
+                                if (targetChannel != null) {
+                                    MessageEmbed data = new EmbedBuilder()
+                                            .setTitle("Ban Report")
+
+                                            .addField("Player Name", "Test inline", true)
+                                            .addField("UUID", "123123123123123123", true)
+                                            .addField("Reason", "Test inline", false)
+                                            .addField("Expire", "Test inline", true)
+                                            .addField("Duration", "Test", true)
+                                            .addField("Source", "Test", false)
+                                            .build();
+                                    targetChannel.sendMessageEmbeds(data).queue();
+                                } else {
+                                    System.out.println("Target channel not found.");
+                                }
+
+
                             } else {
                                 String uuid = plugin.getBanManager().getUUID(subCommand);
                                 Ban ban = plugin.getBanManager().getBan(uuid);

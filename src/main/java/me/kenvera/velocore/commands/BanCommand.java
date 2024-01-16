@@ -57,6 +57,8 @@ public final class BanCommand {
                                     CommandSource source = ctx.getSource();
                                     String playerArg = StringArgumentType.getString(ctx, "player");
                                     String reason = StringArgumentType.getString(ctx, "reason");
+                                    long royalty = 1196793581751521390L;
+                                    long to = 919806897631158292L;
 
                                     Optional<Player> targetPlayer = plugin.getProxy().getPlayer(playerArg);
                                     if (targetPlayer.isPresent()) {
@@ -75,7 +77,7 @@ public final class BanCommand {
                                                         playerOnline.sendMessage(Utils.formatBanMessage(plugin));
                                                         ProtocolizePlayer playerProtocol = Protocolize.playerProvider().player(playerOnline.getUniqueId());
                                                         if (playerProtocol != null) {
-                                                            playerProtocol.playSound(Sound.BLOCK_ANVIL_PLACE, SoundCategory.AMBIENT, 1f, 1f);
+                                                            playerProtocol.playSound(Sound.ITEM_GOAT_HORN_SOUND_7, SoundCategory.AMBIENT, 1f, 1f);
                                                         }
                                                     });
                                                     plugin.getProxy().getAllPlayers().stream().filter(player1 -> player1.hasPermission("velocity.staff")).forEach(playerOnline -> {
@@ -87,6 +89,7 @@ public final class BanCommand {
                                                     plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§7" + player.getUsername() + " §chas been permanently banned by §7" + playerSource.getUsername()));
                                                     plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§cReason: §7" + reason));
                                                     plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
+                                                    plugin.getDiscordLogger().logEmbedBan(String.valueOf(plugin.getBanManager().getID(player.getUniqueId().toString())), player.getUsername(), player.getUniqueId().toString(), player.getRemoteAddress().getHostName(), player.getClientBrand(), "Permanent", "-", "-", ((Player) source).getUsername(), reason, royalty, to);
                                                 }
 
                                             }
@@ -103,7 +106,7 @@ public final class BanCommand {
                                                     playerOnline.sendMessage(Utils.formatBanMessage(plugin));
                                                     ProtocolizePlayer playerProtocol = Protocolize.playerProvider().player(playerOnline.getUniqueId());
                                                     if (playerProtocol != null) {
-                                                        playerProtocol.playSound(Sound.BLOCK_ANVIL_PLACE, SoundCategory.AMBIENT, 1f, 1f);
+                                                        playerProtocol.playSound(Sound.ITEM_GOAT_HORN_SOUND_7, SoundCategory.AMBIENT, 1f, 1f);
                                                     }
                                                 });
                                                 plugin.getProxy().getAllPlayers().stream().filter(player1 -> player1.hasPermission("velocity.staff")).forEach(playerOnline -> {
@@ -115,6 +118,7 @@ public final class BanCommand {
                                                 source.sendMessage(Component.text("§7" + player.getUsername() + " §chas been permanently banned by §7Console"));
                                                 source.sendMessage(Component.text("§cReason: §7" + reason));
                                                 source.sendMessage(Component.text(""));
+                                                plugin.getDiscordLogger().logEmbedBan(String.valueOf(plugin.getBanManager().getID(player.getUniqueId().toString())), player.getUsername(), player.getUniqueId().toString(), player.getRemoteAddress().getHostName(), player.getClientBrand(), "Permanent", "-", "-", "Console", reason, royalty, to);
                                             }
                                         }
                                     } else {
@@ -135,7 +139,7 @@ public final class BanCommand {
                                                         playerOnline.sendMessage(Utils.formatBanMessage(plugin));
                                                         ProtocolizePlayer playerProtocol = Protocolize.playerProvider().player(playerOnline.getUniqueId());
                                                         if (playerProtocol != null) {
-                                                            playerProtocol.playSound(Sound.BLOCK_ANVIL_PLACE, SoundCategory.AMBIENT, 1f, 1f);
+                                                            playerProtocol.playSound(Sound.ITEM_GOAT_HORN_SOUND_7, SoundCategory.AMBIENT, 1f, 1f);
                                                         }
                                                     });
                                                     plugin.getProxy().getAllPlayers().stream().filter(player1 -> player1.hasPermission("velocity.staff")).forEach(playerOnline -> {
@@ -147,6 +151,7 @@ public final class BanCommand {
                                                     plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§7" + playerName + " §chas been permanently banned by §7" + playerSource.getUsername()));
                                                     plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§cReason: §7" + reason));
                                                     plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
+                                                    plugin.getDiscordLogger().logEmbedBan(String.valueOf(plugin.getBanManager().getID(uuid)), playerName, uuid, "Offline", "n/a", "Permanent", "n/a", "n/a", ((Player) source).getUsername(), reason, royalty, to);
                                                 }
                                             } else {
                                                 playerSource.sendMessage(Component.text("§7" + playerArg + " §cplayer data can't be found within database!"));
@@ -167,7 +172,7 @@ public final class BanCommand {
                                                         playerOnline.sendMessage(Utils.formatBanMessage(plugin));
                                                         ProtocolizePlayer playerProtocol = Protocolize.playerProvider().player(playerOnline.getUniqueId());
                                                         if (playerProtocol != null) {
-                                                            playerProtocol.playSound(Sound.BLOCK_ANVIL_PLACE, SoundCategory.AMBIENT, 1f, 1f);
+                                                            playerProtocol.playSound(Sound.ITEM_GOAT_HORN_SOUND_7, SoundCategory.AMBIENT, 1f, 1f);
                                                         }
                                                     });
                                                     plugin.getProxy().getAllPlayers().stream().filter(player1 -> player1.hasPermission("velocity.staff")).forEach(playerOnline -> {
@@ -179,6 +184,7 @@ public final class BanCommand {
                                                     source.sendMessage(Component.text("§7" + playerName + " §chas been permanently banned by §7Console"));
                                                     source.sendMessage(Component.text("§cReason: §7" + reason));
                                                     source.sendMessage(Component.text(""));
+                                                    plugin.getDiscordLogger().logEmbedBan(String.valueOf(plugin.getBanManager().getID(uuid)), playerName, uuid, "Offline", "n/a", "Permanent", "n/a", "n/a", "Console", reason, royalty, to);
                                                 }
                                             } else {
                                                 source.sendMessage(Component.text("§7" + playerArg + " §cplayer data can't be found within database!"));

@@ -9,6 +9,7 @@ import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.permission.Tristate;
+import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import me.kenvera.velocore.VeloCore;
 import net.kyori.adventure.text.Component;
@@ -50,42 +51,43 @@ public final class FindCommand {
                         })
                         .executes(ctx -> {
                             CommandSource source = ctx.getSource();
-                            Player playerSource = (Player) source;
                             String playerArg = StringArgumentType.getString(ctx, "player");
                             Optional<Player> targetPlayer = plugin.getProxy().getPlayer(playerArg);
 
-                            if (targetPlayer.isPresent()) {
-                                String targetPlayerServer = targetPlayer.get().getCurrentServer().get().getServerInfo().getName();
-                                UUID uuid = targetPlayer.get().getUniqueId();
-                                String targetPlayerAddress = "/" + targetPlayer.get().getRemoteAddress().getHostName();
-                                boolean targetPlayerMode = targetPlayer.get().isOnlineMode();
-                                ProtocolVersion targetPlayerVersion = targetPlayer.get().getProtocolVersion();
-                                String targetPlayerClient = targetPlayer.get().getClientBrand();
-                                long targetPlayerPing = targetPlayer.get().getPing();
-                                long onlineTime = plugin.getPlayerSession().getOrDefault(uuid, 0L);
-                                long currentTime = System.currentTimeMillis();
+                            if (source instanceof Player || source instanceof ConsoleCommandSource) {
+                                if (targetPlayer.isPresent()) {
+                                    String targetPlayerServer = targetPlayer.get().getCurrentServer().get().getServerInfo().getName();
+                                    UUID uuid = targetPlayer.get().getUniqueId();
+                                    String targetPlayerAddress = "/" + targetPlayer.get().getRemoteAddress().getHostName();
+                                    boolean targetPlayerMode = targetPlayer.get().isOnlineMode();
+                                    ProtocolVersion targetPlayerVersion = targetPlayer.get().getProtocolVersion();
+                                    String targetPlayerClient = targetPlayer.get().getClientBrand();
+                                    long targetPlayerPing = targetPlayer.get().getPing();
+                                    long onlineTime = plugin.getPlayerSession().getOrDefault(uuid, 0L);
+                                    long currentTime = System.currentTimeMillis();
 
-                                long onlineSession = currentTime - onlineTime;
-                                long totalMinutes = TimeUnit.MILLISECONDS.toMinutes(onlineSession);
-                                long hours = totalMinutes / 60;
-                                long minutes = totalMinutes % 60;
-                                String formattedTime = "";
+                                    long onlineSession = currentTime - onlineTime;
+                                    long totalMinutes = TimeUnit.MILLISECONDS.toMinutes(onlineSession);
+                                    long hours = totalMinutes / 60;
+                                    long minutes = totalMinutes % 60;
+                                    String formattedTime = "";
 
-                                if (hours > 0) {
-                                    formattedTime += hours + "h ";
+                                    if (hours > 0) {
+                                        formattedTime += hours + "h ";
+                                    }
+                                    formattedTime += minutes + "m";
+
+                                    source.sendMessage(Component.text(""));
+                                    source.sendMessage(Component.text("§ePlayer §a" + targetPlayer.get().getUsername() + " §eis online in §a" + targetPlayerServer + "§7 " + formattedTime));
+                                    source.sendMessage(Component.text("§eUUID: §7" + uuid));
+                                    source.sendMessage(Component.text("§eIP: §7" + targetPlayerAddress + "§7 " + targetPlayerPing + "ms"));
+                                    source.sendMessage(Component.text("§eOnline Mode: §7" + targetPlayerMode));
+                                    source.sendMessage(Component.text("§eClient Version: §7" + targetPlayerVersion));
+                                    source.sendMessage(Component.text("§eClient Brand: §7" + targetPlayerClient));
+                                    source.sendMessage(Component.text(""));
+                                } else {
+                                    source.sendMessage(Component.text("§cPlayer " + playerArg + " seems to be offline"));
                                 }
-                                formattedTime += minutes + "m";
-
-                                source.sendMessage(Component.text(""));
-                                source.sendMessage(Component.text("§ePlayer §a" + targetPlayer.get().getUsername() + " §eis online in §a" + targetPlayerServer + "§7 " + formattedTime));
-                                source.sendMessage(Component.text("§eUUID: §7" + uuid));
-                                source.sendMessage(Component.text("§eIP: §7" + targetPlayerAddress + "§7 " + targetPlayerPing + "ms"));
-                                source.sendMessage(Component.text("§eOnline Mode: §7" + targetPlayerMode));
-                                source.sendMessage(Component.text("§eClient Version: §7" + targetPlayerVersion));
-                                source.sendMessage(Component.text("§eClient Brand: §7" + targetPlayerClient));
-                                source.sendMessage(Component.text(""));
-                            } else {
-                                source.sendMessage(Component.text("§cPlayer " + playerArg + " seems to be offline"));
                             }
                             return Command.SINGLE_SUCCESS;
                         }))

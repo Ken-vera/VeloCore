@@ -13,9 +13,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.UUID;
 import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 
 public class PlayerData {
     private final VeloCore plugin;
@@ -37,18 +37,13 @@ public class PlayerData {
 
     public String getPrefix(UUID uuid, boolean formatted) {
         User user = plugin.getLuckPerms().getUserManager().getUser(uuid);
+        assert user != null;
         CachedMetaData metaData = user.getCachedData().getMetaData();
-        if (metaData != null) {
-
-            if (formatted) {
-                String prefix = metaData.getPrefix().replaceAll("&", "§");
-                return prefix;
-            } else {
-                String prefix = metaData.getPrefix().replace("&.", "");
-                return prefix;
-            }
+        if (formatted) {
+            return Objects.requireNonNull(metaData.getPrefix()).replaceAll("&", "§");
+        } else {
+            return Objects.requireNonNull(metaData.getPrefix()).replace("&.", "");
         }
-        return "";
     }
 
     public String getGroup(String uuid) {
@@ -113,12 +108,12 @@ public class PlayerData {
             statement.executeUpdate();
 
             User user = plugin.getLuckPerms().getUserManager().getUser(UUID.fromString(uuid));
+            assert user != null;
             user.data().clear(NodeType.INHERITANCE::matches);
             for (String groupName : newGroups) {
                 Group assignGroup = plugin.getLuckPerms().getGroupManager().getGroup(groupName);
 
                 if (assignGroup != null) {
-                    assert user != null;
                     user.data().add(InheritanceNode.builder(assignGroup).build());
                     assignedGroups.add(groupName);
                 } else {
@@ -246,11 +241,10 @@ public class PlayerData {
     }
 
     public boolean isOnGroup(Player player, String group) {
-        return plugin.getLuckPerms().getUserManager().getUser(player.getUniqueId()).getPrimaryGroup().equalsIgnoreCase(group);
+        return Objects.requireNonNull(plugin.getLuckPerms().getUserManager().getUser(player.getUniqueId())).getPrimaryGroup().equalsIgnoreCase(group);
     }
 
     public Long isMuted(Player player) {
-        System.out.println("ismuted " + player.getUsername());
         try (Connection connection = plugin.getSqlConnection().getConnection();
             PreparedStatement statement = connection.prepareStatement(GET_MUTE)) {
 
@@ -259,8 +253,7 @@ public class PlayerData {
 
             ResultSet result = statement.executeQuery();
             if (result.next()) {
-                Long expire = result.getLong("muted");
-                return expire;
+                return result.getLong("muted");
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -268,19 +261,32 @@ public class PlayerData {
         return null;
     }
 
-    public void setMuted(String uuid, Long duration) throws SQLException {
-        System.out.println(uuid);
+    public void setMuted(String uuid, String reason) throws SQLException {
         try (Connection connection = plugin.getSqlConnection().getConnection();
              PreparedStatement statement = connection.prepareStatement(INSERT_MUTE)) {
 
             statement.setString(1, uuid);
-            if (duration != null) {
-                statement.setLong(2, duration);
+            if (reason != null) {
+                statement.setString(2, reason);
             } else {
                 statement.setString(2, null);
             }
 
             statement.executeUpdate();
+        }
+    }
+
+    public String getMuted(String uuid) throws SQLException {
+        try (Connection connection = plugin.getSqlConnection().getConnection();
+             PreparedStatement statement = connection.prepareStatement(GET_MUTE)) {
+
+            statement.setString(1, uuid);
+
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                return resultSet.getString("username");
+            }
+            return null;
         }
     }
 }

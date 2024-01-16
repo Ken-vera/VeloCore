@@ -1,8 +1,9 @@
 package me.kenvera.velocore.listeners;
 
 import me.kenvera.velocore.VeloCore;
-import me.kenvera.velocore.discordshake.DiscordConnection;
 import me.kenvera.velocore.database.DataManager;
+import me.kenvera.velocore.discordshake.DiscordConnection;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -56,4 +57,31 @@ public class DiscordChannel extends ListenerAdapter {
             System.out.println("Target channel not found.");
         }
     }
+
+    public void sendEmbed(Long textChannelId, MessageEmbed embed) {
+        TextChannel textChannel = plugin.getDiscordConnection().getTextChannel(textChannelId);
+
+        if (textChannel != null) {
+            textChannel.sendMessageEmbeds(embed).queue();
+        } else {
+            plugin.getLogger().error("§cText channel with id " + textChannelId.toString() + "§ccan't be found!");
+        }
+    }
+
+//    public void sendEmbed(String id, String type) {
+//        String targetChannelId = id; // Replace with your target channel ID
+//
+//        // Get the TextChannel instance using the provided channel ID
+//        TextChannel targetChannel = plugin.getDiscordConnection().jda.getTextChannelById(targetChannelId);
+//
+//        if (targetChannel != null) {
+//            EmbedBuilder data = new EmbedBuilder()
+//                    .setTitle("Ban")
+//                    .setDescription("Test")
+//                    .build();
+//            targetChannel.sendMessage(data).queue();
+//        } else {
+//            System.out.println("Target channel not found.");
+//        }
+//    }
 }

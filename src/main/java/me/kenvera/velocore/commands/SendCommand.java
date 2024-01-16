@@ -90,7 +90,7 @@ public final class SendCommand {
                                             Optional<RegisteredServer> targetServer = plugin.getProxy().getServer(server);
 
                                             if (targetServer.isPresent()) {
-                                                plugin.getProxy().getAllPlayers().stream()
+                                                 plugin.getProxy().getAllPlayers().stream()
                                                         .filter(player -> !player.equals(playerSource))
                                                         .filter(player -> !Objects.equals(player.getCurrentServer().get().getServerInfo().getName(), server))
                                                         .forEach(player -> player.createConnectionRequest(targetServer.get()).fireAndForget());

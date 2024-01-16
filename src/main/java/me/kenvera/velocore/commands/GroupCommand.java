@@ -8,6 +8,7 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
+import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import me.kenvera.velocore.VeloCore;
 import net.kyori.adventure.text.Component;
@@ -52,7 +53,6 @@ public final class GroupCommand {
                         })
                         .executes(ctx -> {
                             CommandSource source = ctx.getSource();
-                            Player playerSource = (Player) source;
                             String subCommand = StringArgumentType.getString(ctx, "subCommand");
 
                             if (subCommand.equalsIgnoreCase("list")) {
@@ -61,11 +61,11 @@ public final class GroupCommand {
                                         .map(Group::getName)
                                         .collect(Collectors.toSet());
 
-                                playerSource.sendMessage(Component.text("\n§6§lGroup List: \n"));
+                                source.sendMessage(Component.text("\n§6§lGroup List: \n"));
                                 for (String group : groups) {
-                                    playerSource.sendMessage(Component.text("- " + group));
+                                    source.sendMessage(Component.text("- " + group));
                                 }
-                                playerSource.sendMessage(Component.text("\n"));
+                                source.sendMessage(Component.text("\n"));
                             }
 
                             return Command.SINGLE_SUCCESS;
@@ -90,27 +90,27 @@ public final class GroupCommand {
                                 })
                                 .executes(ctx -> {
                                     CommandSource source = ctx.getSource();
-                                    Player playerSource = (Player) source;
                                     String subCommand = StringArgumentType.getString(ctx, "subCommand");
                                     String player = StringArgumentType.getString(ctx, "player");
                                     String uuid = plugin.getPlayerData().getUUID(player);
                                     String group = Objects.requireNonNull(plugin.getLuckPerms().getUserManager().getUser(UUID.fromString(uuid))).getPrimaryGroup();
 
-                                    if (subCommand.equalsIgnoreCase("reset")) {
-                                        if (!group.equals("default")) {
-                                            try {
-                                                plugin.getPlayerData().setGroup(uuid, "default");
-                                                playerSource.sendMessage(Component.text("§aSuccesfully reset " + player + "'s §agroup!"));
-                                            } catch (SQLException e) {
-                                                playerSource.sendMessage(Component.text("§cDatabase error occured when trying to reset " + player + "'s §cgroup!"));
-                                                e.printStackTrace();
+                                    if (source instanceof Player || source instanceof ConsoleCommandSource) {
+                                        if (subCommand.equalsIgnoreCase("reset")) {
+                                            if (!group.equals("default")) {
+                                                try {
+                                                    plugin.getPlayerData().setGroup(uuid, "default");
+                                                    source.sendMessage(Component.text("§aSuccesfully reset " + player + "'s §agroup!"));
+                                                } catch (SQLException e) {
+                                                    source.sendMessage(Component.text("§cDatabase error occured when trying to reset " + player + "'s §cgroup!"));
+                                                    e.printStackTrace();
+                                                }
                                             }
+                                        } else if (subCommand.equalsIgnoreCase("lookup")) {
+                                            group = plugin.getPlayerData().getGroup(uuid);
+                                            source.sendMessage(Component.text("§aPlayer §b" + player + " §a" + group));
                                         }
-                                    } else if (subCommand.equalsIgnoreCase("lookup")) {
-                                        group = plugin.getPlayerData().getGroup(uuid);
-                                        playerSource.sendMessage(Component.text("§aPlayer §b" + player + " §a" + group));
                                     }
-
                                     return Command.SINGLE_SUCCESS;
                                 })
                         )
@@ -155,105 +155,105 @@ public final class GroupCommand {
                                         })
                                         .executes(ctx -> {
                                             CommandSource source = ctx.getSource();
-                                            Player playerSource = (Player) source;
                                             String subCommand = StringArgumentType.getString(ctx, "subCommand");
                                             String player = StringArgumentType.getString(ctx, "player");
                                             String group = StringArgumentType.getString(ctx, "group");
 
-                                            CompletableFuture<String> uuidFuture = CompletableFuture.supplyAsync(() ->
-                                                    plugin.getPlayerData().getUUID(player)
-                                            );
+                                            if (source instanceof Player || source instanceof ConsoleCommandSource) {
+                                                CompletableFuture<String> uuidFuture = CompletableFuture.supplyAsync(() ->
+                                                        plugin.getPlayerData().getUUID(player)
+                                                );
 
-                                            uuidFuture.thenAcceptAsync(uuid -> {
-                                                // Load user asynchronously
-                                                UserManager userManager = plugin.getLuckPerms().getUserManager();
-                                                CompletableFuture<User> userFuture = userManager.loadUser(UUID.fromString(uuid));
+                                                uuidFuture.thenAcceptAsync(uuid -> {
+                                                    // Load user asynchronously
+                                                    UserManager userManager = plugin.getLuckPerms().getUserManager();
+                                                    CompletableFuture<User> userFuture = userManager.loadUser(UUID.fromString(uuid));
 
-                                                userFuture.thenAcceptAsync(user -> {
-                                                    String playerGroup = user.getPrimaryGroup();
-                                                    Set<String> groupList = plugin.getLuckPerms().getGroupManager().getLoadedGroups()
-                                                            .stream()
-                                                            .map(Group::getName)
-                                                            .collect(Collectors.toSet());
+                                                    userFuture.thenAcceptAsync(user -> {
+                                                        String playerGroup = user.getPrimaryGroup();
+                                                        Set<String> groupList = plugin.getLuckPerms().getGroupManager().getLoadedGroups()
+                                                                .stream()
+                                                                .map(Group::getName)
+                                                                .collect(Collectors.toSet());
 
-                                                    if (subCommand.equalsIgnoreCase("set")) {
-                                                        if (groupList.contains(group)) {
-                                                            if (!playerGroup.equals(group)) {
-                                                                try {
-                                                                    plugin.getPlayerData().setGroup(uuid, group);
-                                                                    plugin.getRedis().publish("chronosync", "set_" + uuid + "_" + group);
-                                                                    playerSource.sendMessage(Component.text("§aSuccessfully set §b" + player + "'s §agroup to §f" + group));
-                                                                } catch (SQLException e) {
-                                                                    playerSource.sendMessage(Component.text("§cDatabase error occurred when trying to set §b" + player + "'s §cgroup to §f" + group));
-                                                                    e.printStackTrace();
+                                                        if (subCommand.equalsIgnoreCase("set")) {
+                                                            if (groupList.contains(group)) {
+                                                                if (!playerGroup.equals(group)) {
+                                                                    try {
+                                                                        plugin.getPlayerData().setGroup(uuid, group);
+                                                                        plugin.getRedis().publish("chronosync", "set_" + uuid + "_" + group);
+                                                                        source.sendMessage(Component.text("§aSuccessfully set §b" + player + "'s §agroup to §f" + group));
+                                                                    } catch (SQLException e) {
+                                                                        source.sendMessage(Component.text("§cDatabase error occurred when trying to set §b" + player + "'s §cgroup to §f" + group));
+                                                                        e.printStackTrace();
+                                                                    }
+                                                                } else {
+                                                                    source.sendMessage(Component.text("§b" + player + " §calready has §f" + group + " §cgroup!"));
                                                                 }
                                                             } else {
-                                                                playerSource.sendMessage(Component.text("§b" + player + " §calready has §f" + group + " §cgroup!"));
+                                                                source.sendMessage(Component.text(group + " §cgroup is not available within luckperms!"));
                                                             }
-                                                        } else {
-                                                            playerSource.sendMessage(Component.text(group + " §cgroup is not available within luckperms!"));
-                                                        }
 
-                                                    } else if (subCommand.equalsIgnoreCase("add")) {
-                                                        if (groupList.contains(group)) {
-                                                            if (!playerGroup.equals(group)) {
-                                                                try {
-                                                                    plugin.getPlayerData().addGroup(uuid, group);
-                                                                    plugin.getRedis().publish("chronosync", "add_" + uuid + "_" + group);
-                                                                    playerSource.sendMessage(Component.text("§aSuccessfully added §f" + group + " §ato §b" + player + "'s §agroup"));
-                                                                } catch (SQLException e) {
-                                                                    playerSource.sendMessage(Component.text("§cDatabase error occurred when trying to adding §f" + group + " §cinto §b" + player + "'s §cgroup"));
-                                                                    e.printStackTrace();
+                                                        } else if (subCommand.equalsIgnoreCase("add")) {
+                                                            if (groupList.contains(group)) {
+                                                                if (!playerGroup.equals(group)) {
+                                                                    try {
+                                                                        plugin.getPlayerData().addGroup(uuid, group);
+                                                                        plugin.getRedis().publish("chronosync", "add_" + uuid + "_" + group);
+                                                                        source.sendMessage(Component.text("§aSuccessfully added §f" + group + " §ato §b" + player + "'s §agroup"));
+                                                                    } catch (SQLException e) {
+                                                                        source.sendMessage(Component.text("§cDatabase error occurred when trying to adding §f" + group + " §cinto §b" + player + "'s §cgroup"));
+                                                                        e.printStackTrace();
+                                                                    }
+                                                                } else {
+                                                                    source.sendMessage(Component.text("§b" + player + " §calready has §f" + group + " §cgroup!"));
                                                                 }
                                                             } else {
-                                                                playerSource.sendMessage(Component.text("§b" + player + " §calready has §f" + group + " §cgroup!"));
+                                                                source.sendMessage(Component.text(group + " §cgroup is not available within luckperms!"));
                                                             }
-                                                        } else {
-                                                            playerSource.sendMessage(Component.text(group + " §cgroup is not available within luckperms!"));
-                                                        }
 
-                                                    } else if (subCommand.equalsIgnoreCase("remove")) {
-                                                        if (groupList.contains(group)) {
-                                                            Collection<Group> inheritedGroups = user.getInheritedGroups(user.getQueryOptions());
+                                                        } else if (subCommand.equalsIgnoreCase("remove")) {
+                                                            if (groupList.contains(group)) {
+                                                                Collection<Group> inheritedGroups = user.getInheritedGroups(user.getQueryOptions());
 
-                                                            boolean hasgroup = false;
-                                                            for (Group group1 : inheritedGroups) {
-                                                                if (group1.getName().equalsIgnoreCase(group)) {
-                                                                    hasgroup = true;
-                                                                    break;
+                                                                boolean hasgroup = false;
+                                                                for (Group group1 : inheritedGroups) {
+                                                                    if (group1.getName().equalsIgnoreCase(group)) {
+                                                                        hasgroup = true;
+                                                                        break;
+                                                                    }
                                                                 }
-                                                            }
 
-                                                            if (hasgroup) {
-                                                                try {
-                                                                    plugin.getPlayerData().removeGroup(uuid, group);
-                                                                    plugin.getRedis().publish("chronosync", "remove_" + uuid + "_" + group);
-                                                                    playerSource.sendMessage(Component.text("§aSuccessfully remove §f" + group + " §afrom §b" + player + "'s §agroup"));
-                                                                } catch (SQLException e) {
-                                                                    playerSource.sendMessage(Component.text("§cDatabase error occurred when trying to remove §f" + group + " §cfrom §b" + player + "'s §cgroup"));
-                                                                    e.printStackTrace();
+                                                                if (hasgroup) {
+                                                                    try {
+                                                                        plugin.getPlayerData().removeGroup(uuid, group);
+                                                                        plugin.getRedis().publish("chronosync", "remove_" + uuid + "_" + group);
+                                                                        source.sendMessage(Component.text("§aSuccessfully remove §f" + group + " §afrom §b" + player + "'s §agroup"));
+                                                                    } catch (SQLException e) {
+                                                                        source.sendMessage(Component.text("§cDatabase error occurred when trying to remove §f" + group + " §cfrom §b" + player + "'s §cgroup"));
+                                                                        e.printStackTrace();
+                                                                    }
+                                                                } else {
+                                                                    source.sendMessage(Component.text("§b" + player + " §cdon't have §f" + group + " §cgroup to be removed!"));
                                                                 }
                                                             } else {
-                                                                playerSource.sendMessage(Component.text("§b" + player + " §cdon't have §f" + group + " §cgroup to be removed!"));
+                                                                source.sendMessage(Component.text(group + " §cgroup is not available within luckperms!"));
                                                             }
-                                                        } else {
-                                                            playerSource.sendMessage(Component.text(group + " §cgroup is not available within luckperms!"));
                                                         }
-                                                    }
+
+
+                                                    }).exceptionally(exception -> {
+                                                        source.sendMessage(Component.text("§cError occurred while loading user data."));
+                                                        exception.printStackTrace();
+                                                        return null;
+                                                    });
 
                                                 }).exceptionally(exception -> {
-                                                    // Handle exceptions if loading the user fails
-                                                    playerSource.sendMessage(Component.text("§cError occurred while loading user data."));
+                                                    source.sendMessage(Component.text("§cError occurred while getting UUID."));
                                                     exception.printStackTrace();
                                                     return null;
                                                 });
-
-                                            }).exceptionally(exception -> {
-                                                // Handle exceptions if getting UUID fails
-                                                playerSource.sendMessage(Component.text("§cError occurred while getting UUID."));
-                                                exception.printStackTrace();
-                                                return null;
-                                            });
+                                            }
                                             return Command.SINGLE_SUCCESS;
                                         })
                                 )
