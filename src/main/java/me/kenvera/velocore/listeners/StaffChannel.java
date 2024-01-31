@@ -40,7 +40,7 @@ public class StaffChannel {
                         .replaceAll("%server%", server.toUpperCase())
                         .replaceAll("%player%", sender.getUsername())
                         .replaceAll("%prefix%", prefix.replaceAll("§.", "")) +
-                        message.replaceFirst("!", " : ")
+                        message.replaceFirst("!", "")
                                 .replaceAll("§.", ""));
             }
         }
@@ -63,7 +63,7 @@ public class StaffChannel {
                 sendDiscordChat(sender.getUsername(), plugin.getConfigManager().getString("discord.staff-channel-prefix", null)
                         .replaceAll("%server%", server.toUpperCase())
                         .replaceAll("%player%", sender.getUsername())
-                        .replaceAll("%prefix%", prefix.replaceAll("§.", "")) + " : " +
+                        .replaceAll("%prefix%", prefix.replaceAll("§.", "")) +
                         message.replaceAll("§.", ""));
             }
         }

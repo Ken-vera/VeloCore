@@ -4,7 +4,7 @@ import com.velocitypowered.api.event.ResultedEvent;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.connection.PostLoginEvent;
-import com.velocitypowered.api.event.player.ServerConnectedEvent;
+import com.velocitypowered.api.event.player.ServerPreConnectEvent;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
@@ -34,16 +34,15 @@ public class PlayerSession {
     }
 
     @Subscribe
-    public void onServerChange(ServerConnectedEvent event) {
+    public void onServerChange(ServerPreConnectEvent event) {
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
         plugin.getPlayerSession().put(uuid, System.currentTimeMillis());
         var api = ((LibreLoginProvider<Player, RegisteredServer>) proxy.getPluginManager().getPlugin("librelogin").orElseThrow().getInstance().orElseThrow()).getLibreLogin();
+
         if (!api.getAuthorizationProvider().isAuthorized(player)) {
-            System.out.println(player.getUsername() + " is not authorized");
-            System.out.println(api.getAuthorizationProvider().isAuthorized(player));
-            if (!event.getServer().getServerInfo().getName().equalsIgnoreCase("lobby")) {
-                System.out.println(player.getUsername() + " joining lobby");
+            if (!event.getOriginalServer().getServerInfo().getName().equalsIgnoreCase("limbo")) {
+                event.setResult(ServerPreConnectEvent.ServerResult.denied());
             }
         }
 

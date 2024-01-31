@@ -23,6 +23,7 @@ import me.kenvera.velocore.commands.*;
 import me.kenvera.velocore.commands.chat.DonatorChatCommand;
 import me.kenvera.velocore.commands.chat.GlobalChatCommand;
 import me.kenvera.velocore.commands.chat.StaffChatCommand;
+import me.kenvera.velocore.commands.chat.StaffChatToggle;
 import me.kenvera.velocore.database.DataManager;
 import me.kenvera.velocore.database.RedisManager;
 import me.kenvera.velocore.database.SqlManager;
@@ -118,6 +119,7 @@ public final class VeloCore {
         // Command Register
         registerCommand(commandManager, "send", SendCommand.createBrigadierCommand(this), null);
         registerCommand(commandManager, "staffchat", StaffChatCommand.createBrigadierCommand(this), null, "sc");
+        registerCommand(commandManager, "sct", StaffChatToggle.createBrigadierCommand(this), null);
         registerCommand(commandManager, "stafflist", StaffListCommand.createBrigadierCommand(this), null, "sl");
         registerCommand(commandManager, "database", DataBaseCommand.createBrigadierCommand(this), null, "db");
         registerCommand(commandManager, "globallist", null, new GlobalListCommand(proxy), "glist");
