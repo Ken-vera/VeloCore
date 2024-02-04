@@ -65,6 +65,7 @@ public final class MuteCommand {
                                                     try {
                                                         plugin.getPlayerData().setMuted(plugin.getProxy().getPlayer(playerArg).get().getUniqueId().toString(), reason);
                                                         plugin.getRedis().setKey("mute:" + targetPlayer.get().getUniqueId().toString(), expire);
+                                                        plugin.getRedis().setHKey(targetPlayer.get().getUniqueId().toString(), "mute", String.valueOf(expire), reason);
                                                         plugin.broadcast("");
                                                         plugin.broadcast("§7Oops! Seems like someone needs a little break from chatting.");
                                                         targetPlayer.get().sendMessage(Component.text("§7You've been muted for " + duration + ". Enjoy the silence!"));

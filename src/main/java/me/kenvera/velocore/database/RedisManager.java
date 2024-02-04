@@ -7,6 +7,7 @@ import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.JedisPubSub;
 
+import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -84,6 +85,12 @@ public class RedisManager {
     public void setKey(String key, Long value) {
         try (Jedis jedis = jedispool.getResource()) {
             jedis.set(key, String.valueOf(value));
+        }
+    }
+
+    public void setHKey(String identifier, String hashKey, String... values) {
+        try (Jedis jedis = jedispool.getResource()) {
+            jedis.hset(identifier, hashKey, values[]);
         }
     }
 
