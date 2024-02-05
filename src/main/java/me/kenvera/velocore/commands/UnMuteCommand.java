@@ -13,7 +13,6 @@ import com.velocitypowered.api.proxy.Player;
 import me.kenvera.velocore.VeloCore;
 import net.kyori.adventure.text.Component;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -56,41 +55,30 @@ public final class UnMuteCommand {
                             Optional<Player> targetPlayer = plugin.getProxy().getPlayer(playerArg);
                             if (targetPlayer.isPresent()) {
                                 if (source instanceof Player playerSource) {
-                                    try {
-                                        plugin.getPlayerData().setMuted(plugin.getProxy().getPlayer(playerArg).get().getUniqueId().toString(), null);
-                                        plugin.getRedis().removeKey("mute:" + targetPlayer.get().getUniqueId().toString());
-                                        targetPlayer.get().sendMessage(Component.text(""));
-                                        targetPlayer.get().sendMessage(Component.text("§7Your mute has been revoked. Enjoy the conversation!"));
-                                        targetPlayer.get().sendMessage(Component.text(""));
-                                        plugin.broadcastStaff("");
-                                        plugin.broadcastStaff("§7" + targetPlayer.get().getUsername() + "§7 has been unmuted by " + playerSource.getUsername());
-                                        plugin.broadcastStaff("");
+                                    plugin.getRedis().removeMute("mute:" + targetPlayer.get().getUniqueId().toString());
+                                    targetPlayer.get().sendMessage(Component.text(""));
+                                    targetPlayer.get().sendMessage(Component.text("§7Your mute has been revoked. Enjoy the conversation!"));
+                                    targetPlayer.get().sendMessage(Component.text(""));
+                                    plugin.broadcastStaff("");
+                                    plugin.broadcastStaff("§7" + targetPlayer.get().getUsername() + "§7 has been unmuted by " + playerSource.getUsername());
+                                    plugin.broadcastStaff("");
 
-                                        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
-                                        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§7" + targetPlayer.get().getUsername() + "§7 has been unmuted by " + playerSource.getUsername()));
-                                        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
-                                    } catch (SQLException e) {
-                                        e.printStackTrace();
-                                        playerSource.sendMessage(Component.text("§cThere was a SQL error when trying to unmute player!"));
-                                    }
+                                    plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
+                                    plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§7" + targetPlayer.get().getUsername() + "§7 has been unmuted by " + playerSource.getUsername()));
+                                    plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
+
                                 } else if (source instanceof ConsoleCommandSource) {
-                                    try {
-                                        plugin.getPlayerData().setMuted(plugin.getProxy().getPlayer(playerArg).get().getUniqueId().toString(), null);
-                                        plugin.getRedis().removeKey("mute:" + targetPlayer.get().getUniqueId().toString());
-                                        targetPlayer.get().sendMessage(Component.text(""));
-                                        targetPlayer.get().sendMessage(Component.text("§7Your mute has been revoked. Enjoy the conversation!"));
-                                        targetPlayer.get().sendMessage(Component.text(""));
-                                        plugin.broadcastStaff("");
-                                        plugin.broadcastStaff("§7" + targetPlayer.get().getUsername() + "§7 has been unmuted by Console");
-                                        plugin.broadcastStaff("");
+                                    plugin.getRedis().removeMute("mute:" + targetPlayer.get().getUniqueId().toString());
+                                    targetPlayer.get().sendMessage(Component.text(""));
+                                    targetPlayer.get().sendMessage(Component.text("§7Your mute has been revoked. Enjoy the conversation!"));
+                                    targetPlayer.get().sendMessage(Component.text(""));
+                                    plugin.broadcastStaff("");
+                                    plugin.broadcastStaff("§7" + targetPlayer.get().getUsername() + "§7 has been unmuted by Console");
+                                    plugin.broadcastStaff("");
 
-                                        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
-                                        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§7" + targetPlayer.get().getUsername() + "§7 has been unmuted by Console"));
-                                        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
-                                    } catch (SQLException e) {
-                                        e.printStackTrace();
-                                        source.sendMessage(Component.text("§cThere was a SQL error when trying to unmute player!"));
-                                    }
+                                    plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
+                                    plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§7" + targetPlayer.get().getUsername() + "§7 has been unmuted by Console"));
+                                    plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
                                 }
                             }
                             return Command.SINGLE_SUCCESS;

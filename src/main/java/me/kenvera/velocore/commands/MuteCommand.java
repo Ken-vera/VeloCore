@@ -14,7 +14,6 @@ import me.kenvera.velocore.VeloCore;
 import me.kenvera.velocore.managers.Utils;
 import net.kyori.adventure.text.Component;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -62,45 +61,32 @@ public final class MuteCommand {
                                             Optional<Player> targetPlayer = plugin.getProxy().getPlayer(playerArg);
                                             if (targetPlayer.isPresent()) {
                                                 if (source instanceof Player playerSource) {
-                                                    try {
-                                                        plugin.getPlayerData().setMuted(plugin.getProxy().getPlayer(playerArg).get().getUniqueId().toString(), reason);
-                                                        plugin.getRedis().setKey("mute:" + targetPlayer.get().getUniqueId().toString(), expire);
-                                                        plugin.getRedis().setHKey(targetPlayer.get().getUniqueId().toString(), "mute", String.valueOf(expire), reason);
-                                                        plugin.broadcast("");
-                                                        plugin.broadcast("§7Oops! Seems like someone needs a little break from chatting.");
-                                                        targetPlayer.get().sendMessage(Component.text("§7You've been muted for " + duration + ". Enjoy the silence!"));
-                                                        plugin.broadcastStaff("§7" + targetPlayer.get().getUsername() + "§7 has been muted for " + duration + "§7 by " + playerSource.getUsername());
-                                                        plugin.broadcastStaff("§7Reason: " + reason);
-                                                        plugin.broadcast("");
+                                                    plugin.getRedis().setMute("mute:" + targetPlayer.get().getUniqueId().toString(), expire, reason, playerSource.getUsername());
+                                                    plugin.broadcast("");
+                                                    plugin.broadcast("§7Oops! Seems like someone needs a little break from chatting.");
+                                                    targetPlayer.get().sendMessage(Component.text("§7You've been muted for " + duration + ". Enjoy the silence!"));
+                                                    plugin.broadcastStaff("§7" + targetPlayer.get().getUsername() + "§7 has been muted for " + duration + "§7 by " + playerSource.getUsername());
+                                                    plugin.broadcastStaff("§7Reason: " + reason);
+                                                    plugin.broadcast("");
 
-                                                        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
-                                                        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§7" + targetPlayer.get().getUsername() + "§7 has been muted for " + duration + "§7 by " + playerSource.getUsername()));
-                                                        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§7Reason: " + reason));
-                                                        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
-                                                    } catch (SQLException e) {
-                                                        e.printStackTrace();
-                                                        playerSource.sendMessage(Component.text("§cThere was a SQL error when trying to insert mute!"));
-                                                    }
+                                                    plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
+                                                    plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§7" + targetPlayer.get().getUsername() + "§7 has been muted for " + duration + "§7 by " + playerSource.getUsername()));
+                                                    plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§7Reason: " + reason));
+                                                    plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
                                                 } else if (source instanceof ConsoleCommandSource) {
-                                                    try {
-                                                        plugin.getPlayerData().setMuted(plugin.getProxy().getPlayer(playerArg).get().getUniqueId().toString(), reason);
-                                                        plugin.getRedis().setKey("mute:" + targetPlayer.get().getUniqueId().toString(), expire);
-                                                        plugin.broadcast("");
-                                                        plugin.broadcast("§7Oops! Seems like someone needs a little break from chatting.");
-                                                        targetPlayer.get().sendMessage(Component.text("§7You've been muted for " + duration + ". Enjoy the silence!"));
-                                                        plugin.broadcastStaff("");
-                                                        plugin.broadcastStaff("§7" + targetPlayer.get().getUsername() + "§7 has been muted for " + duration + "§7 by Console");
-                                                        plugin.broadcastStaff("§7Reason: " + reason);
-                                                        plugin.broadcast("");
+                                                    plugin.getRedis().setMute("mute:" + targetPlayer.get().getUniqueId().toString(), expire, reason, "Console");
+                                                    plugin.broadcast("");
+                                                    plugin.broadcast("§7Oops! Seems like someone needs a little break from chatting.");
+                                                    targetPlayer.get().sendMessage(Component.text("§7You've been muted for " + duration + ". Enjoy the silence!"));
+                                                    plugin.broadcastStaff("");
+                                                    plugin.broadcastStaff("§7" + targetPlayer.get().getUsername() + "§7 has been muted for " + duration + "§7 by Console");
+                                                    plugin.broadcastStaff("§7Reason: " + reason);
+                                                    plugin.broadcast("");
 
-                                                        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
-                                                        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§7" + targetPlayer.get().getUsername() + "§7 has been muted for " + duration + "§7 by Console"));
-                                                        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§7Reason: " + reason));
-                                                        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
-                                                    } catch (SQLException e) {
-                                                        e.printStackTrace();
-                                                        source.sendMessage(Component.text("§cThere was a SQL error when trying to insert mute!"));
-                                                    }
+                                                    plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
+                                                    plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§7" + targetPlayer.get().getUsername() + "§7 has been muted for " + duration + "§7 by Console"));
+                                                    plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("§7Reason: " + reason));
+                                                    plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text(""));
                                                 }
                                             }
                                             return Command.SINGLE_SUCCESS;

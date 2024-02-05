@@ -7,7 +7,6 @@ import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.JedisPubSub;
 
-import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -60,9 +59,9 @@ public class RedisManager {
         });
     }
 
-    public JedisPool getJedis() {
-        return jedispool;
-    }
+        public JedisPool getJedis() {
+            return jedispool;
+        }
 
     public void close() {
         unsubscribe();
@@ -88,9 +87,21 @@ public class RedisManager {
         }
     }
 
-    public void setHKey(String identifier, String hashKey, String... values) {
+    public void setMute(String identifier, long expire, String reason, String issuer) {
         try (Jedis jedis = jedispool.getResource()) {
-            jedis.hset(identifier, hashKey, values[]);
+            jedis.hset(identifier, "mute-expire", String.valueOf(expire));
+            jedis.hset(identifier, "mute-reason", reason);
+            jedis.hset(identifier, "mute-issuer", issuer);
+
+            jedis.pexpire(identifier, expire - System.currentTimeMillis());
+        }
+    }
+
+    public void removeMute(String identifier) {
+        try (Jedis jedis = jedispool.getResource()) {
+            for (String key : jedis.keys(identifier)) {
+                jedis.del(key);
+            }
         }
     }
 

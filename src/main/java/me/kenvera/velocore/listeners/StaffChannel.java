@@ -53,10 +53,9 @@ public class StaffChannel {
                 for (Player player : plugin.getProxy().getAllPlayers()) {
                     if (player.getPermissionValue("velocity.staff") == Tristate.TRUE) {
                         event.setResult(PlayerChatEvent.ChatResult.denied());
-                        if (muteStatus) {
-                            message = "§k" + message.replaceAll("\\.", "§k$0");
+                        if (!muteStatus) {
+                            player.sendMessage(Component.text("§7[§cStaffChat§7] [§6" + server.toUpperCase() + "§7] " + prefix + " " + sender.getUsername() + " : §6" + message));
                         }
-                        player.sendMessage(Component.text("§7[§cStaffChat§7] [§6" + server.toUpperCase() + "§7] " + prefix + " " + sender.getUsername() + " : §6" + message));
                     }
                 }
                 System.out.println("§7[§cStaffChat§7] [§6" + server.toUpperCase() + "§7] " + prefix + " " + sender.getUsername() + " : §6" + message);

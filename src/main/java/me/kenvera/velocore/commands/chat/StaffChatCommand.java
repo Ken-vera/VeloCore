@@ -63,9 +63,9 @@ public final class StaffChatCommand {
                                         playerSource.sendMessage(Component.text("§7[§cStaffChat§7] §cStaff Chat is Disabled!"));
                                     }
                                 } else if (subCommand.equalsIgnoreCase("mute")) {
-                                    boolean currenStatus = plugin.getPlayerStaffChatMute().getOrDefault(uuid, false);
+                                    boolean currentStatus = plugin.getPlayerStaffChatMute().getOrDefault(uuid, false);
 
-                                    if (!currenStatus) {
+                                    if (!currentStatus) {
                                         plugin.getPlayerStaffChatMute().put(uuid, true);
                                         playerSource.sendMessage(Component.text("§7[§cStaffChat§7] §aStaff Chat is Muted!"));
                                     } else {
