@@ -161,7 +161,6 @@ public final class Debug {
                                     System.out.println("Target channel not found.");
                                 }
 
-
                             } else {
                                 String uuid = plugin.getBanManager().getUUID(subCommand);
                                 Ban ban = plugin.getBanManager().getBan(uuid);

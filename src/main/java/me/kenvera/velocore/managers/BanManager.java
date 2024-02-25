@@ -13,15 +13,15 @@ public class BanManager {
     private final VeloCore plugin;
     private static final String BANNED_CRITERIA = "purged = 0 and ((expire > ?) or (expire = -1))";
     private static final String SET_TIMEZONE = "SET time_zone = '+07:00'";
-    private static final String INSERT_BAN = "INSERT INTO CNS1_cnplayerdata_1.ban (uuid, username, issuer, reason, expire, banned_time) VALUES (?, ?, ?, ?, ?, ?)";
-    private static final String GET_BAN = "SELECT id, reason, issuer, expire, banned_time FROM CNS1_cnplayerdata_1.ban WHERE " + BANNED_CRITERIA + " and uuid = ? LIMIT 1";
-    private static final String GET_BANNED = "SELECT DISTINCT username FROM CNS1_cnplayerdata_1.ban WHERE " + BANNED_CRITERIA;
+    private static final String INSERT_BAN = "INSERT INTO ban (uuid, username, issuer, reason, expire, banned_time) VALUES (?, ?, ?, ?, ?, ?)";
+    private static final String GET_BAN = "SELECT id, reason, issuer, expire, banned_time FROM ban WHERE " + BANNED_CRITERIA + " and uuid = ? LIMIT 1";
+    private static final String GET_BANNED = "SELECT DISTINCT username FROM ban WHERE " + BANNED_CRITERIA;
     private static final String GET_BAN_HISTORY = "SELECT id, reason, until, bannedBy, reducedUntil, issuedAt, purged, reducedBy  FROM ban_bans WHERE uuid = ?";
-    private static final String GET_USERNAME = "SELECT username FROM CNS1_cnplayerdata_1.player_data WHERE uuid=? LIMIT 1";
-    private static final String GET_UUID = "SELECT uuid FROM CNS1_cnplayerdata_1.player_data WHERE username=? LIMIT 1";
-    private static final String GET_ID = "SELECT id FROM CNS1_cnplayerdata_1.ban WHERE " + BANNED_CRITERIA + " and uuid = ? LIMIT 1";
+    private static final String GET_USERNAME = "SELECT username FROM player_data WHERE uuid=? LIMIT 1";
+    private static final String GET_UUID = "SELECT uuid FROM player_data WHERE username=? LIMIT 1";
+    private static final String GET_ID = "SELECT id FROM ban WHERE " + BANNED_CRITERIA + " and uuid = ? LIMIT 1";
     private static final String PURGE_BANS = "UPDATE ban_bans SET purged=? WHERE " + BANNED_CRITERIA + " and user = ?";
-    private static final String UNBAN_ID = "UPDATE CNS1_cnplayerdata_1.ban SET purged = ?, purged_time = ?, purger = ? WHERE uuid = ? AND id = ?";
+    private static final String UNBAN_ID = "UPDATE ban SET purged = ?, purged_time = ?, purger = ? WHERE uuid = ? AND id = ?";
     private static final String REDUCE_BANS = "UPDATE ban_bans SET reducedUntil=?, reducedBy=?, reducedAt=? WHERE " + BANNED_CRITERIA + " AND user=?";
     private static final String GET_BAN_COUNT = "SELECT count(*) FROM ban_bans WHERE " + BANNED_CRITERIA;
 

@@ -20,17 +20,17 @@ import java.util.UUID;
 public class PlayerData {
     private final VeloCore plugin;
     private static final String MUTED_CRITERIA = "muted > ? OR muted IS NOT NULL";
-    private static final String GET_GROUP = "SELECT `group` FROM CNS1_cnplayerdata_1.player_data WHERE uuid = ? LIMIT 1";
-    private static final String SET_GROUP = "INSERT INTO CNS1_cnplayerdata_1.player_data (uuid, `group`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `group` = VALUES(`group`)";
-    private static final String ADD_GROUP = "INSERT INTO CNS1_cnplayerdata_1.player_data (uuid, `group`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `group` = VALUES(`group`)";
-    private static final String REMOVE_GROUP = "INSERT INTO CNS1_cnplayerdata_1.player_data (uuid, `group`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `group` = VALUES(`group`)";
-    private static final String GET_PLAYER_DATA = "SELECT COUNT(*) FROM CNS1_cnplayerdata_1.player_data WHERE uuid = ? AND username = ?";
-    private static final String INSERT_PLAYER_DATA = "INSERT INTO CNS1_cnplayerdata_1.player_data (uuid, username, `group`, first_join) VALUES (?, ?, ?, ?)";
-    private static final String GET_ID = "SELECT uuid FROM CNS1_cnplayerdata_1.player_data WHERE username = ?";
-    private static final String GET_USERNAMES = "SELECT username FROM CNS1_cnplayerdata_1.player_data LIMIT 50 OFFSET 0";
-    private static final String GET_USERNAMES_FILTER = "SELECT username FROM CNS1_cnplayerdata_1.player_data WHERE username COLLATE latin1_general_ci LIKE ? LIMIT 50 OFFSET 0";
-    private static final String GET_MUTE = "SELECT muted FROM CNS1_cnplayerdata_1.player_data WHERE " + MUTED_CRITERIA + " and uuid = ?";
-    private static final String INSERT_MUTE = "INSERT INTO CNS1_cnplayerdata_1.player_data (uuid, muted) VALUES (?, ?) ON DUPLICATE KEY UPDATE muted = VALUES (muted)";
+    private static final String GET_GROUP = "SELECT `group` FROM player_data WHERE uuid = ? LIMIT 1";
+    private static final String SET_GROUP = "INSERT INTO player_data (uuid, `group`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `group` = VALUES(`group`)";
+    private static final String ADD_GROUP = "INSERT INTO player_data (uuid, `group`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `group` = VALUES(`group`)";
+    private static final String REMOVE_GROUP = "INSERT INTO player_data (uuid, `group`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `group` = VALUES(`group`)";
+    private static final String GET_PLAYER_DATA = "SELECT COUNT(*) FROM player_data WHERE uuid = ? AND username = ?";
+    private static final String INSERT_PLAYER_DATA = "INSERT INTO player_data (uuid, username, `group`, first_join) VALUES (?, ?, ?, ?)";
+    private static final String GET_ID = "SELECT uuid FROM player_data WHERE username = ?";
+    private static final String GET_USERNAMES = "SELECT username FROM player_data LIMIT 50 OFFSET 0";
+    private static final String GET_USERNAMES_FILTER = "SELECT username FROM player_data WHERE username LIKE ? LIMIT 50 OFFSET 0";
+    private static final String GET_MUTE = "SELECT muted FROM player_data WHERE " + MUTED_CRITERIA + " and uuid = ?";
+    private static final String INSERT_MUTE = "INSERT INTO player_data (uuid, muted) VALUES (?, ?) ON DUPLICATE KEY UPDATE muted = VALUES (muted)";
     public PlayerData(VeloCore plugin) {
         this.plugin = plugin;
     }

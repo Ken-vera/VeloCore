@@ -97,18 +97,26 @@ public final class GroupCommand {
 
                                     if (source instanceof Player || source instanceof ConsoleCommandSource) {
                                         if (subCommand.equalsIgnoreCase("reset")) {
-                                            if (!group.equals("default")) {
-                                                try {
-                                                    plugin.getPlayerData().setGroup(uuid, "default");
-                                                    source.sendMessage(Component.text("§aSuccesfully reset " + player + "'s §agroup!"));
-                                                } catch (SQLException e) {
-                                                    source.sendMessage(Component.text("§cDatabase error occured when trying to reset " + player + "'s §cgroup!"));
-                                                    e.printStackTrace();
+                                            if (source.getPermissionValue("velocity.group.reset") == Tristate.TRUE) {
+                                                if (!group.equals("default")) {
+                                                    try {
+                                                        plugin.getPlayerData().setGroup(uuid, "default");
+                                                        source.sendMessage(Component.text("§aSuccesfully reset " + player + "'s §agroup!"));
+                                                    } catch (SQLException e) {
+                                                        source.sendMessage(Component.text("§cDatabase error occured when trying to reset " + player + "'s §cgroup!"));
+                                                        e.printStackTrace();
+                                                    }
                                                 }
+                                            } else {
+                                                source.sendMessage(Component.text("§cYou don't have permission to execute this command!"));
                                             }
                                         } else if (subCommand.equalsIgnoreCase("lookup")) {
-                                            group = plugin.getPlayerData().getGroup(uuid);
-                                            source.sendMessage(Component.text("§aPlayer §b" + player + " §a" + group));
+                                            if (source.getPermissionValue("velocity.group.lookup") == Tristate.TRUE) {
+                                                group = plugin.getPlayerData().getGroup(uuid);
+                                                source.sendMessage(Component.text("§aPlayer §b" + player + " §a" + group));
+                                            } else {
+                                                source.sendMessage(Component.text("§cYou don't have permission to execute this command!"));
+                                            }
                                         }
                                     }
                                     return Command.SINGLE_SUCCESS;
@@ -177,67 +185,79 @@ public final class GroupCommand {
                                                                 .collect(Collectors.toSet());
 
                                                         if (subCommand.equalsIgnoreCase("set")) {
-                                                            if (groupList.contains(group)) {
-                                                                if (!playerGroup.equals(group)) {
-                                                                    try {
-                                                                        plugin.getPlayerData().setGroup(uuid, group);
-                                                                        plugin.getRedis().publish("chronosync", "set_" + uuid + "_" + group);
-                                                                        source.sendMessage(Component.text("§aSuccessfully set §b" + player + "'s §agroup to §f" + group));
-                                                                    } catch (SQLException e) {
-                                                                        source.sendMessage(Component.text("§cDatabase error occurred when trying to set §b" + player + "'s §cgroup to §f" + group));
-                                                                        e.printStackTrace();
+                                                            if (source.getPermissionValue("velocity.group.set") == Tristate.TRUE) {
+                                                                if (groupList.contains(group)) {
+                                                                    if (!playerGroup.equals(group)) {
+                                                                        try {
+                                                                            plugin.getPlayerData().setGroup(uuid, group);
+                                                                            plugin.getRedis().publish("chronosync", "set_" + uuid + "_" + group);
+                                                                            source.sendMessage(Component.text("§aSuccessfully set §b" + player + "'s §agroup to §f" + group));
+                                                                        } catch (SQLException e) {
+                                                                            source.sendMessage(Component.text("§cDatabase error occurred when trying to set §b" + player + "'s §cgroup to §f" + group));
+                                                                            e.printStackTrace();
+                                                                        }
+                                                                    } else {
+                                                                        source.sendMessage(Component.text("§b" + player + " §calready has §f" + group + " §cgroup!"));
                                                                     }
                                                                 } else {
-                                                                    source.sendMessage(Component.text("§b" + player + " §calready has §f" + group + " §cgroup!"));
+                                                                    source.sendMessage(Component.text(group + " §cgroup is not available within luckperms!"));
                                                                 }
                                                             } else {
-                                                                source.sendMessage(Component.text(group + " §cgroup is not available within luckperms!"));
+                                                                source.sendMessage(Component.text("§cYou don't have permission to execute this command!"));
                                                             }
 
                                                         } else if (subCommand.equalsIgnoreCase("add")) {
-                                                            if (groupList.contains(group)) {
-                                                                if (!playerGroup.equals(group)) {
-                                                                    try {
-                                                                        plugin.getPlayerData().addGroup(uuid, group);
-                                                                        plugin.getRedis().publish("chronosync", "add_" + uuid + "_" + group);
-                                                                        source.sendMessage(Component.text("§aSuccessfully added §f" + group + " §ato §b" + player + "'s §agroup"));
-                                                                    } catch (SQLException e) {
-                                                                        source.sendMessage(Component.text("§cDatabase error occurred when trying to adding §f" + group + " §cinto §b" + player + "'s §cgroup"));
-                                                                        e.printStackTrace();
+                                                            if (source.getPermissionValue("velocity.group.add") == Tristate.TRUE) {
+                                                                if (groupList.contains(group)) {
+                                                                    if (!playerGroup.equals(group)) {
+                                                                        try {
+                                                                            plugin.getPlayerData().addGroup(uuid, group);
+                                                                            plugin.getRedis().publish("chronosync", "add_" + uuid + "_" + group);
+                                                                            source.sendMessage(Component.text("§aSuccessfully added §f" + group + " §ato §b" + player + "'s §agroup"));
+                                                                        } catch (SQLException e) {
+                                                                            source.sendMessage(Component.text("§cDatabase error occurred when trying to adding §f" + group + " §cinto §b" + player + "'s §cgroup"));
+                                                                            e.printStackTrace();
+                                                                        }
+                                                                    } else {
+                                                                        source.sendMessage(Component.text("§b" + player + " §calready has §f" + group + " §cgroup!"));
                                                                     }
                                                                 } else {
-                                                                    source.sendMessage(Component.text("§b" + player + " §calready has §f" + group + " §cgroup!"));
+                                                                    source.sendMessage(Component.text(group + " §cgroup is not available within luckperms!"));
                                                                 }
                                                             } else {
-                                                                source.sendMessage(Component.text(group + " §cgroup is not available within luckperms!"));
+                                                                source.sendMessage(Component.text("§cYou don't have permission to execute this command!"));
                                                             }
 
                                                         } else if (subCommand.equalsIgnoreCase("remove")) {
-                                                            if (groupList.contains(group)) {
-                                                                Collection<Group> inheritedGroups = user.getInheritedGroups(user.getQueryOptions());
+                                                            if (source.getPermissionValue("velocity.group.remove") == Tristate.TRUE) {
+                                                                if (groupList.contains(group)) {
+                                                                    Collection<Group> inheritedGroups = user.getInheritedGroups(user.getQueryOptions());
 
-                                                                boolean hasgroup = false;
-                                                                for (Group group1 : inheritedGroups) {
-                                                                    if (group1.getName().equalsIgnoreCase(group)) {
-                                                                        hasgroup = true;
-                                                                        break;
+                                                                    boolean hasgroup = false;
+                                                                    for (Group group1 : inheritedGroups) {
+                                                                        if (group1.getName().equalsIgnoreCase(group)) {
+                                                                            hasgroup = true;
+                                                                            break;
+                                                                        }
                                                                     }
-                                                                }
 
-                                                                if (hasgroup) {
-                                                                    try {
-                                                                        plugin.getPlayerData().removeGroup(uuid, group);
-                                                                        plugin.getRedis().publish("chronosync", "remove_" + uuid + "_" + group);
-                                                                        source.sendMessage(Component.text("§aSuccessfully remove §f" + group + " §afrom §b" + player + "'s §agroup"));
-                                                                    } catch (SQLException e) {
-                                                                        source.sendMessage(Component.text("§cDatabase error occurred when trying to remove §f" + group + " §cfrom §b" + player + "'s §cgroup"));
-                                                                        e.printStackTrace();
+                                                                    if (hasgroup) {
+                                                                        try {
+                                                                            plugin.getPlayerData().removeGroup(uuid, group);
+                                                                            plugin.getRedis().publish("chronosync", "remove_" + uuid + "_" + group);
+                                                                            source.sendMessage(Component.text("§aSuccessfully remove §f" + group + " §afrom §b" + player + "'s §agroup"));
+                                                                        } catch (SQLException e) {
+                                                                            source.sendMessage(Component.text("§cDatabase error occurred when trying to remove §f" + group + " §cfrom §b" + player + "'s §cgroup"));
+                                                                            e.printStackTrace();
+                                                                        }
+                                                                    } else {
+                                                                        source.sendMessage(Component.text("§b" + player + " §cdon't have §f" + group + " §cgroup to be removed!"));
                                                                     }
                                                                 } else {
-                                                                    source.sendMessage(Component.text("§b" + player + " §cdon't have §f" + group + " §cgroup to be removed!"));
+                                                                    source.sendMessage(Component.text(group + " §cgroup is not available within luckperms!"));
                                                                 }
                                                             } else {
-                                                                source.sendMessage(Component.text(group + " §cgroup is not available within luckperms!"));
+                                                                source.sendMessage(Component.text("§cYou don't have permission to execute this command!"));
                                                             }
                                                         }
 
